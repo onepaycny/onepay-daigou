@@ -2616,7 +2616,9 @@
             document.querySelector('.quick-buy')?.addEventListener('click', function() {
                 if (!currentUser) {
                     alert('請先登入！');
-                    document.getElementById('auth-modal').style.display = 'flex';
+                    // 強制顯示登入模態框
+document.getElementById('auth-modal').style.display = 'flex';
+console.log('Firebase狀態:', firebase.apps.length > 0 ? '已加載' : '未加載');
                     return;
                 }
                 const productName = prompt('請輸入商品名稱：');
