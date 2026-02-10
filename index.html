@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<!-- Firebase SDK（必須在您自己的JS代碼之前） -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ONEPAY拍吧 - 个人中心</title>
+    <title>ONEPAY拍吧 - 跨境代购集运系统</title>
+    
+    <!-- 替換Tailwind CSS CDN -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
@@ -2368,899 +2372,199 @@
     </div>
 
     <script>
-// 找到現有的DOMContentLoaded事件監聽器
-// 將所有JavaScript代碼包裹在一個DOMContentLoaded事件中
-
-document.addEventListener('DOMContentLoaded', function() {
-    // ==============================
-    // Firebase 配置和初始化
-    // ==============================
-    
-    // 🔥 替換為您的Firebase配置
-    const firebaseConfig = {
-        apiKey: "AIzaSyBdpWnNt2W8aam-WLMwN7J9KuJgya74",
-        authDomain: "onepay-daigou.firebaseapp.com",
-        projectId: "onepay-daigou",
-        storageBucket: "onepay-daigou.firebasestorage.app",
-        messagingSenderId: "267936185399",
-        appId: "1:267936185399:web:90cf6e3e976c6cb213b2"
-    };
-
-    // 初始化Firebase
-    firebase.initializeApp(firebaseConfig);
-
-    // 初始化Firebase服務
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const storage = firebase.storage();
-
-    // 全局變量
-    let currentUser = null;
-    let isAdminMode = false;
-    const ADMIN_PASSWORD = "onepay888"; // 管理密碼
-
-    // ==============================
-    // 用戶認證功能
-    // ==============================
-
-    // 檢查用戶登入狀態
-    auth.onAuthStateChanged(user => {
-        const authModal = document.getElementById('auth-modal');
-        
-        if (user) {
-            // 用戶已登入
-            currentUser = user;
-            authModal.style.display = 'none';
-            
-            // 更新用戶界面
-            updateUserProfile(user);
-            
-            // 檢查用戶文檔是否存在
-            checkUserDocument(user);
-            
-            // 加載用戶數據
-            loadUserData();
-            
-        } else {
-            // 用戶未登入，顯示登入模態框
-            currentUser = null;
-            authModal.style.display = 'flex';
-        }
-    });
-
-    // 登入功能
-    document.getElementById('login-button').addEventListener('click', async function() {
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-        
-        try {
-            await auth.signInWithEmailAndPassword(email, password);
-            // 登入成功，模態框會自動關閉
-        } catch (error) {
-            alert('登入失敗: ' + error.message);
-        }
-    });
-
-    // 註冊功能
-    document.getElementById('signup-button').addEventListener('click', async function() {
-        const email = document.getElementById('auth-email').value;
-        const password = document.getElementById('auth-password').value;
-        
-        try {
-            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-            const user = userCredential.user;
-            
-            // 創建用戶文檔
-            await db.collection('users').doc(user.uid).set({
-                email: user.email,
-                name: user.email.split('@')[0],
-                phone: '',
-                vipLevel: 0,
-                balance: 0,
-                coinBalance: 0,
-                couponCount: 0,
-                inviteCode: generateInviteCode(),
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            alert('註冊成功！歡迎使用ONEPAY拍吧！');
-        } catch (error) {
-            alert('註冊失敗: ' + error.message);
-        }
-    });
-
-    // 忘記密碼功能
-    document.getElementById('forgot-password').addEventListener('click', async function(e) {
-        e.preventDefault();
-        const email = document.getElementById('auth-email').value;
-        
-        if (!email) {
-            alert('請輸入您的電子郵件地址');
-            return;
-        }
-        
-        try {
-            await auth.sendPasswordResetEmail(email);
-            alert('密碼重置郵件已發送至 ' + email);
-        } catch (error) {
-            alert('發送失敗: ' + error.message);
-        }
-    });
-
-    // ==============================
-    // 工具函數
-    // ==============================
-
-    function generateInviteCode() {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code = '';
-        for (let i = 0; i < 8; i++) {
-            code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-    }
-
-    function formatDate(timestamp) {
-        if (!timestamp) return '未知時間';
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-        return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-    }
-
-    async function checkUserDocument(user) {
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        
-        if (!userDoc.exists) {
-            await db.collection('users').doc(user.uid).set({
-                email: user.email,
-                name: user.displayName || user.email.split('@')[0],
-                phone: '',
-                vipLevel: 0,
-                balance: 0,
-                coinBalance: 0,
-                couponCount: 0,
-                inviteCode: generateInviteCode(),
-                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-        }
-    }
-
-    async function updateUserProfile(user) {
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        const userData = userDoc.data();
-        
-        const userNameElement = document.querySelector('.user-name-large');
-        if (userNameElement && userData) {
-            userNameElement.textContent = userData.name;
-        }
-        
-        const userIdElement = document.querySelector('.user-id-code');
-        if (userIdElement) {
-            userIdElement.textContent = '用戶ID: ' + user.uid.substring(0, 8);
-        }
-        
-        const inviteElement = document.querySelector('.invite-code');
-        if (inviteElement && userData.inviteCode) {
-            inviteElement.textContent = '邀請碼: ' + userData.inviteCode;
-        }
-    }
-
-    // ==============================
-    // 頁面管理代碼（原有）
-    // ==============================
-    
-    // ... 這裡插入您原有的頁面切換、FAB按鈕等代碼 ...
-    // 確保所有DOM操作都在這個事件監聽器內
-    
-});
-    
-    // 更新VIP卡片數據
-    updateVIPCard(userData);
-}
-
-// 更新VIP卡片
-function updateVIPCard(userData) {
-    if (!userData) return;
-    
-    const balanceElements = document.querySelectorAll('.vip-balance-value-premium');
-    if (balanceElements.length >= 3) {
-        balanceElements[0].textContent = userData.balance.toFixed(2);
-        balanceElements[1].textContent = userData.coinBalance.toFixed(2);
-        balanceElements[2].textContent = userData.couponCount;
-    }
-    
-    // 更新VIP等級顯示
-    const vipBadge = document.querySelector('.vip-badge-premium');
-    if (vipBadge) {
-        const vipLevels = ['普通會員', 'VIP會員', '尊享會員'];
-        vipBadge.innerHTML = `<i class="fas fa-crown crown-icon-premium"></i> ${vipLevels[userData.vipLevel] || vipLevels[0]}`;
-    }
-}
-
-// 加載用戶數據
-async function loadUserData() {
-    if (!currentUser) return;
-    
-    // 加載訂單數據
-    await loadOrders();
-    
-    // 加載包裹數據
-    await loadPackages();
-    
-    // 加載統計數據
-    updateStatistics();
-}
-
-// ==============================
-// 訂單管理功能
-// ==============================
-
-// 加載訂單
-async function loadOrders() {
-    if (!currentUser) return;
-    
-    try {
-        const ordersSnapshot = await db.collection('orders')
-            .where('userId', '==', currentUser.uid)
-            .orderBy('createdAt', 'desc')
-            .limit(10)
-            .get();
-        
-        const orderListContainer = document.querySelector('.order-list-container');
-        const homeOrderList = document.querySelector('#home-page .space-y-3');
-        
-        if (ordersSnapshot.empty) {
-            // 無訂單，顯示空狀態
-            if (orderListContainer) {
-                orderListContainer.innerHTML = `
-                    <div class="empty-order-state">
-                        <div class="empty-order-icon">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <h3 class="text-base font-medium text-gray-800 mb-2">您還沒有任何訂單</h3>
-                        <p class="text-sm text-gray-500 mb-4">去下單吧</p>
-                        <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all create-order-btn">
-                            立即下單
-                        </button>
-                    </div>
-                `;
-            }
-            return;
-        }
-        
-        // 構建訂單列表HTML
-        let ordersHTML = '';
-        let homeOrdersHTML = '';
-        let buyCount = 0;
-        let shipCount = 0;
-        
-        ordersSnapshot.forEach(doc => {
-            const order = doc.data();
-            const orderId = doc.id;
-            
-            if (order.type === 'buy') buyCount++;
-            if (order.type === 'ship') shipCount++;
-            
-            // 訂單卡片HTML
-            const orderCard = `
-                <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item" data-order-id="${orderId}">
-                    <div class="flex items-center">
-                        <div class="order-icon-circle ${order.type === 'buy' ? 'order-buy-icon' : 'order-ship-icon'} mr-3">
-                            <i class="fas ${order.type === 'buy' ? 'fa-shopping-cart' : 'fa-shipping-fast'} text-white text-sm"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-1">
-                                <h4 class="font-medium text-gray-800 text-sm single-line">${order.productName || '未命名訂單'}</h4>
-                                <span class="status-badge status-${order.status}">${getStatusText(order.status)}</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mb-1 single-line">
-                                ${order.type === 'buy' ? '代購' : '轉運'} · 金額: ¥${order.total || 0}
-                            </p>
-                            <p class="text-xs text-gray-400">${formatDate(order.createdAt)}</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            ordersHTML += orderCard;
-            
-            // 首頁只顯示最新的3個訂單
-            if (homeOrdersHTML.split('</div>').length <= 3) {
-                homeOrdersHTML += orderCard;
-            }
-        });
-        
-        // 更新訂單列表
-        if (orderListContainer) {
-            orderListContainer.innerHTML = ordersHTML;
-        }
-        
-        // 更新首頁訂單列表
-        if (homeOrderList) {
-            homeOrderList.innerHTML = homeOrdersHTML;
-        }
-        
-        // 更新訂單數量統計
-        document.querySelector('.buy-order-count').textContent = `${buyCount} 單`;
-        document.querySelector('.ship-order-count').textContent = `${shipCount} 單`;
-        
-        // 綁定訂單點擊事件
-        document.querySelectorAll('.order-item').forEach(item => {
-            item.addEventListener('click', function() {
-                const orderId = this.getAttribute('data-order-id');
-                viewOrderDetail(orderId);
-            });
-        });
-        
-    } catch (error) {
-        console.error('加載訂單失敗:', error);
-    }
-}
-
-// ==============================
-// 包裹管理功能
-// ==============================
-
-// 加載包裹
-async function loadPackages() {
-    if (!currentUser) return;
-    
-    try {
-        const packagesSnapshot = await db.collection('packages')
-            .where('userId', '==', currentUser.uid)
-            .orderBy('createdAt', 'desc')
-            .limit(10)
-            .get();
-        
-        const packageListContainer = document.querySelector('#ship-page .order-list-container');
-        
-        if (!packagesSnapshot.empty) {
-            let packagesHTML = '';
-            
-            packagesSnapshot.forEach(doc => {
-                const package = doc.data();
-                const packageId = doc.id;
-                
-                packagesHTML += `
-                    <div class="shadow-card p-4 mb-3 cursor-pointer package-item" data-package-id="${packageId}">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="font-medium text-gray-800">${package.trackingNumber}</div>
-                            <span class="status-badge status-${package.status}">${getPackageStatusText(package.status)}</span>
-                        </div>
-                        <div class="text-sm text-gray-600 mb-2">${package.carrier || '未知快遞'}</div>
-                        <div class="text-xs text-gray-500">
-                            內容: ${package.content || '未填寫'}
-                        </div>
-                        <div class="text-xs text-gray-400 mt-2">${formatDate(package.createdAt)}</div>
-                    </div>
-                `;
-            });
-            
-            if (packageListContainer) {
-                packageListContainer.innerHTML = packagesHTML;
-            }
-        }
-        
-    } catch (error) {
-        console.error('加載包裹失敗:', error);
-    }
-}
-
-// ==============================
-// 管理後台功能
-// ==============================
-
-// 管理後台登入
-document.getElementById('admin-login-btn').addEventListener('click', function() {
-    const password = document.getElementById('admin-password').value;
-    
-    if (password === ADMIN_PASSWORD) {
-        isAdminMode = true;
-        document.getElementById('admin-modal').style.display = 'none';
-        showAdminDashboard();
-    } else {
-        alert('管理密碼錯誤！');
-    }
-});
-
-// 取消管理登入
-document.getElementById('admin-cancel').addEventListener('click', function() {
-    document.getElementById('admin-modal').style.display = 'none';
-});
-
-// 顯示管理後台（在設置模態框中添加管理按鈕）
-document.addEventListener('DOMContentLoaded', function() {
-    // 在設置列表中添加管理後台項目
-    const settingsList = document.querySelector('.settings-list');
-    const adminItem = document.createElement('div');
-    adminItem.className = 'settings-item';
-    adminItem.id = 'admin-login-item';
-    adminItem.innerHTML = `
-        <i class="fas fa-user-shield"></i>
-        <span class="settings-item-text">管理後台</span>
-    `;
-    settingsList.appendChild(adminItem);
-    
-    // 綁定管理後台點擊事件
-    document.getElementById('admin-login-item').addEventListener('click', function() {
-        document.getElementById('settings-modal').classList.remove('active');
-        document.getElementById('admin-modal').style.display = 'flex';
-    });
-});
-
-// ==============================
-// 工具函數
-// ==============================
-
-// 生成邀請碼
-function generateInviteCode() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    let code = '';
-    for (let i = 0; i < 8; i++) {
-        code += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return code;
-}
-
-// 格式化日期
-function formatDate(timestamp) {
-    if (!timestamp) return '未知時間';
-    
-    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-}
-
-// 獲取狀態文本
-function getStatusText(status) {
-    const statusMap = {
-        'pending_payment': '待支付',
-        'pending_confirmation': '待確認',
-        'processing': '處理中',
-        'purchased': '已採購',
-        'shipped': '已發貨',
-        'completed': '已完成',
-        'return': '退/換貨',
-        'cancelled': '已退單'
-    };
-    return statusMap[status] || status;
-}
-
-// 獲取包裹狀態文本
-function getPackageStatusText(status) {
-    const statusMap = {
-        'not_stored': '未入庫',
-        'stored': '已入庫',
-        'shipping': '運輸中',
-        'customs': '清關中',
-        'arrived': '已到貨',
-        'delivered': '已簽收'
-    };
-    return statusMap[status] || status;
-}
-
-// 更新統計數據
-async function updateStatistics() {
-    if (!currentUser) return;
-    
-    try {
-        // 查詢未入庫包裹
-        const notStoredQuery = await db.collection('packages')
-            .where('userId', '==', currentUser.uid)
-            .where('status', '==', 'not_stored')
-            .get();
-        
-        // 查詢已入庫包裹
-        const storedQuery = await db.collection('packages')
-            .where('userId', '==', currentUser.uid)
-            .where('status', '==', 'stored')
-            .get();
-        
-        // 更新快速統計卡片
-        const statItems = document.querySelectorAll('.quick-stat-count');
-        if (statItems.length >= 4) {
-            statItems[0].textContent = notStoredQuery.size; // 未入庫
-            statItems[1].textContent = storedQuery.size;    // 已入庫
-            
-            // 這裡可以添加更多統計數據
-            // statItems[2].textContent = ... // 未採購
-            // statItems[3].textContent = ... // 已採購
-        }
-        
-    } catch (error) {
-        console.error('更新統計數據失敗:', error);
-    }
-}
-
-// ==============================
-// 訂單創建功能
-// ==============================
-
-// 快速代購功能
-document.querySelector('.quick-buy').addEventListener('click', function() {
-    if (!currentUser) {
-        alert('請先登入！');
-        document.getElementById('auth-modal').style.display = 'flex';
-        return;
-    }
-    
-    // 創建代購訂單模態框
-    const productName = prompt('請輸入商品名稱：');
-    if (!productName) return;
-    
-    const productPrice = parseFloat(prompt('請輸入商品價格（人民幣）：'));
-    if (isNaN(productPrice)) return;
-    
-    const quantity = parseInt(prompt('請輸入數量：')) || 1;
-    
-    createBuyOrder(productName, productPrice, quantity);
-});
-
-// 創建代購訂單
-async function createBuyOrder(productName, productPrice, quantity = 1) {
-    try {
-        const serviceFee = calculateServiceFee(productPrice);
-        const shippingFee = 50; // 預設運費
-        const total = productPrice * quantity + serviceFee + shippingFee;
-        
-        const orderData = {
-            userId: currentUser.uid,
-            type: 'buy',
-            status: 'pending_payment',
-            productName: productName,
-            productPrice: productPrice,
-            quantity: quantity,
-            serviceFee: serviceFee,
-            shippingFee: shippingFee,
-            total: total,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        // ==============================
+        // Firebase 配置 - 確保這是正確的
+        // ==============================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAUgbncfETG8MtScJyEXl0RyCqyY8pCbQc",
+            authDomain: "onepay-96552.firebaseapp.com",
+            projectId: "onepay-96552",
+            storageBucket: "onepay-96552.firebasestorage.app",
+            messagingSenderId: "554466443215",
+            appId: "1:554466443215:web:8a31efb7bee8c7bdd6dcba"
         };
-        
-        await db.collection('orders').add(orderData);
-        
-        alert('訂單創建成功！請前往支付。');
-        loadOrders(); // 刷新訂單列表
-        
-    } catch (error) {
-        console.error('創建訂單失敗:', error);
-        alert('創建訂單失敗: ' + error.message);
-    }
-}
 
-// 計算服務費
-function calculateServiceFee(price) {
-    const SERVICE_FEE_RATE = 0.1; // 10%服務費
-    return Math.max(30, price * SERVICE_FEE_RATE); // 最低30元
-}
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
 
-// 包裹預報功能
-document.querySelector('.package-forecast').addEventListener('click', function() {
-    if (!currentUser) {
-        alert('請先登入！');
-        document.getElementById('auth-modal').style.display = 'flex';
-        return;
-    }
-    
-    const trackingNumber = prompt('請輸入快遞單號：');
-    if (!trackingNumber) return;
-    
-    const carrier = prompt('請輸入快遞公司：');
-    if (!carrier) return;
-    
-    const content = prompt('請輸入包裹內容描述：');
-    
-    createPackage(trackingNumber, carrier, content);
-});
+        // 初始化Firebase服務
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
 
-// 創建包裹
-async function createPackage(trackingNumber, carrier, content) {
-    try {
-        const packageData = {
-            userId: currentUser.uid,
-            trackingNumber: trackingNumber,
-            carrier: carrier,
-            content: content || '',
-            warehouse: 'us_ny', // 預設紐約倉庫
-            status: 'not_stored',
-            items: [],
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        
-        await db.collection('packages').add(packageData);
-        
-        alert('包裹預報成功！');
-        loadPackages(); // 刷新包裹列表
-        
-    } catch (error) {
-        console.error('創建包裹失敗:', error);
-        alert('創建包裹失敗: ' + error.message);
-    }
-}
+        // 全局變量
+        let currentUser = null;
+        let isAdminMode = false;
+        const ADMIN_PASSWORD = "onepay888";
 
-// 查看訂單詳情
-async function viewOrderDetail(orderId) {
-    try {
-        const orderDoc = await db.collection('orders').doc(orderId).get();
-        if (orderDoc.exists) {
-            const order = orderDoc.data();
-            
-            // 創建訂單詳情彈窗
-            const detailHTML = `
-                <div style="padding: 20px;">
-                    <h3 style="margin-bottom: 15px;">訂單詳情</h3>
-                    <div style="margin-bottom: 10px;"><strong>商品名稱:</strong> ${order.productName}</div>
-                    <div style="margin-bottom: 10px;"><strong>訂單類型:</strong> ${order.type === 'buy' ? '代購' : '轉運'}</div>
-                    <div style="margin-bottom: 10px;"><strong>狀態:</strong> ${getStatusText(order.status)}</div>
-                    <div style="margin-bottom: 10px;"><strong>數量:</strong> ${order.quantity}</div>
-                    <div style="margin-bottom: 10px;"><strong>商品價格:</strong> ¥${order.productPrice}</div>
-                    <div style="margin-bottom: 10px;"><strong>服務費:</strong> ¥${order.serviceFee}</div>
-                    <div style="margin-bottom: 10px;"><strong>運費:</strong> ¥${order.shippingFee}</div>
-                    <div style="margin-bottom: 20px;"><strong>總金額:</strong> ¥${order.total}</div>
-                    <div style="color: #666; font-size: 14px;">創建時間: ${formatDate(order.createdAt)}</div>
-                </div>
-            `;
-            
-            alert(detailHTML.replace(/<[^>]*>/g, '')); // 簡化顯示
-            
-            // 如果是管理員模式，可以顯示更多選項
-            if (isAdminMode) {
-                const newStatus = prompt('更新訂單狀態 (輸入新狀態):');
-                if (newStatus) {
-                    await updateOrderStatus(orderId, newStatus);
-                }
+        // ==============================
+        // 工具函數
+        // ==============================
+        function generateInviteCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
             }
+            return code;
         }
-    } catch (error) {
-        console.error('查看訂單詳情失敗:', error);
-    }
-}
 
-// 更新訂單狀態
-async function updateOrderStatus(orderId, newStatus) {
-    try {
-        await db.collection('orders').doc(orderId).update({
-            status: newStatus,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        alert('訂單狀態更新成功！');
-        loadOrders();
-        
-    } catch (error) {
-        console.error('更新訂單狀態失敗:', error);
-        alert('更新失敗: ' + error.message);
-    }
-}
-
-// ==============================
-// 現有JavaScript代碼整合點
-// ==============================
-
-// 將現有的事件監聽器包裝在DOMContentLoaded中
-document.addEventListener('DOMContentLoaded', function() {
-    // 您的現有JavaScript代碼放在這裡...
-    // 包括頁面切換、廣告輪播、FAB按鈕等功能
-    
-    // 確保在現有代碼執行後，Firebase相關代碼也能正常工作
-    // ...
-    
-    // 添加登出功能
-    document.getElementById('logout-btn').addEventListener('click', async function() {
-        if (confirm('確定要退出登錄嗎？')) {
-            try {
-                await auth.signOut();
-                alert('已退出登錄');
-                if (isAdminMode) {
-                    isAdminMode = false;
-                }
-            } catch (error) {
-                console.error('退出登錄失敗:', error);
-            }
+        function formatDate(timestamp) {
+            if (!timestamp) return '未知時間';
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
         }
-    });
-    
-    // 添加開始轉運按鈕功能
-    document.querySelector('#ship-page .empty-order-state button').addEventListener('click', function() {
-        alert('開始轉運功能');
-        // 這裡可以跳轉到包裹預報頁面或創建轉運訂單
-    });
-    
-    // 添加立即下單按鈕功能
-    document.querySelector('#buy-page .empty-order-state button').addEventListener('click', function() {
-        const productName = prompt('請輸入商品名稱：');
-        if (!productName) return;
-        
-        const productPrice = parseFloat(prompt('請輸入商品價格（人民幣）：'));
-        if (isNaN(productPrice)) return;
-        
-        createBuyOrder(productName, productPrice);
-    });
-});
 
-// ==============================
-// 管理後台功能實現
-// ==============================
-
-function showAdminDashboard() {
-    // 創建管理後台界面
-    const adminHTML = `
-        <div class="admin-dashboard" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; overflow-y: auto;">
-            <div style="padding: 20px; background: #1a1a1a; color: white; display: flex; justify-content: space-between; align-items: center;">
-                <h2>ONEPAY拍吧 - 管理後台</h2>
-                <button id="admin-back" style="background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">返回</button>
-            </div>
-            
-            <div style="padding: 20px;">
-                <h3 style="margin-bottom: 20px;">系統統計</h3>
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
-                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-users">0</div>
-                        <div style="color: #666;">總用戶數</div>
-                    </div>
-                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-orders">0</div>
-                        <div style="color: #666;">總訂單數</div>
-                    </div>
-                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-packages">0</div>
-                        <div style="color: #666;">總包裹數</div>
-                    </div>
-                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
-                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-revenue">¥0</div>
-                        <div style="color: #666;">總營收</div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 15px;">用戶管理</h3>
-                    <div id="admin-users-list" style="background: #f5f5f5; border-radius: 10px; padding: 15px; max-height: 300px; overflow-y: auto;">
-                        加載中...
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 30px;">
-                    <h3 style="margin-bottom: 15px;">訂單管理</h3>
-                    <div id="admin-orders-list" style="background: #f5f5f5; border-radius: 10px; padding: 15px; max-height: 300px; overflow-y: auto;">
-                        加載中...
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    // 將管理界面添加到body
-    const adminDiv = document.createElement('div');
-    adminDiv.innerHTML = adminHTML;
-    document.body.appendChild(adminDiv);
-    
-    // 綁定返回按鈕
-    document.getElementById('admin-back').addEventListener('click', function() {
-        adminDiv.remove();
-        isAdminMode = false;
-    });
-    
-    // 加載管理數據
-    loadAdminData();
-}
-
-// 加載管理數據
-async function loadAdminData() {
-    try {
-        // 獲取用戶統計
-        const usersSnapshot = await db.collection('users').get();
-        document.getElementById('admin-total-users').textContent = usersSnapshot.size;
+        // ==============================
+        // 用戶認證功能
+        // ==============================
         
-        // 獲取訂單統計
-        const ordersSnapshot = await db.collection('orders').get();
-        document.getElementById('admin-total-orders').textContent = ordersSnapshot.size;
-        
-        // 計算總營收
-        let totalRevenue = 0;
-        ordersSnapshot.forEach(doc => {
-            const order = doc.data();
-            totalRevenue += order.total || 0;
-        });
-        document.getElementById('admin-total-revenue').textContent = '¥' + totalRevenue.toFixed(2);
-        
-        // 獲取包裹統計
-        const packagesSnapshot = await db.collection('packages').get();
-        document.getElementById('admin-total-packages').textContent = packagesSnapshot.size;
-        
-        // 加載用戶列表
-        let usersHTML = '';
-        usersSnapshot.forEach(doc => {
-            const user = doc.data();
-            usersHTML += `
-                <div style="padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: bold;">${user.name || '未設定'}</div>
-                        <div style="font-size: 12px; color: #666;">${user.email}</div>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="adminEditUser('${doc.id}')" style="background: #007aff; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">編輯</button>
-                        <button onclick="adminViewUserOrders('${doc.id}')" style="background: #34c759; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">訂單</button>
-                    </div>
-                </div>
-            `;
-        });
-        document.getElementById('admin-users-list').innerHTML = usersHTML || '無用戶數據';
-        
-        // 加載訂單列表
-        let ordersHTML = '';
-        ordersSnapshot.forEach(doc => {
-            const order = doc.data();
-            ordersHTML += `
-                <div style="padding: 10px; border-bottom: 1px solid #ddd;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <div style="font-weight: bold;">${order.productName || '未命名訂單'}</div>
-                        <span style="font-size: 12px; background: #f0f0f0; padding: 2px 8px; border-radius: 10px;">${getStatusText(order.status)}</span>
-                    </div>
-                    <div style="font-size: 12px; color: #666;">
-                        用戶ID: ${order.userId.substring(0, 8)}... | 金額: ¥${order.total || 0}
-                    </div>
-                </div>
-            `;
-        });
-        document.getElementById('admin-orders-list').innerHTML = ordersHTML || '無訂單數據';
-        
-    } catch (error) {
-        console.error('加載管理數據失敗:', error);
-        document.getElementById('admin-users-list').innerHTML = '加載失敗: ' + error.message;
-        document.getElementById('admin-orders-list').innerHTML = '加載失敗: ' + error.message;
-    }
-}
-
-// 管理員編輯用戶（全局函數）
-window.adminEditUser = async function(userId) {
-    const newVipLevel = prompt('設置VIP等級 (0=普通, 1=VIP, 2=尊享):');
-    if (newVipLevel === null) return;
-    
-    const newBalance = prompt('設置到付餘額:');
-    if (newBalance === null) return;
-    
-    try {
-        await db.collection('users').doc(userId).update({
-            vipLevel: parseInt(newVipLevel) || 0,
-            balance: parseFloat(newBalance) || 0,
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        alert('用戶資料更新成功！');
-        loadAdminData(); // 刷新管理界面
-        
-    } catch (error) {
-        alert('更新失敗: ' + error.message);
-    }
-};
-
-// 管理員查看用戶訂單
-window.adminViewUserOrders = async function(userId) {
-    try {
-        const ordersSnapshot = await db.collection('orders')
-            .where('userId', '==', userId)
-            .orderBy('createdAt', 'desc')
-            .get();
-        
-        let ordersList = '';
-        ordersSnapshot.forEach(doc => {
-            const order = doc.data();
-            ordersList += `- ${order.productName}: ¥${order.total} (${getStatusText(order.status)})\n`;
-        });
-        
-        alert(`用戶訂單列表:\n\n${ordersList || '無訂單'}`);
-        
-    } catch (error) {
-        alert('獲取訂單失敗: ' + error.message);
-    }
-};
-
-// ==============================
-// 初始化完成
-// ==============================
-
-console.log('ONEPAY拍吧系統已加載，等待Firebase初始化...');
+        // 等待DOM加載完成
         document.addEventListener('DOMContentLoaded', function() {
-            // 頁面管理
+            
+            // 檢查用戶登入狀態
+            auth.onAuthStateChanged(user => {
+                const authModal = document.getElementById('auth-modal');
+                
+                if (user) {
+                    currentUser = user;
+                    if (authModal) authModal.style.display = 'none';
+                    console.log('用戶已登入:', user.email);
+                    
+                    // 更新用戶界面
+                    updateUserProfile(user);
+                    
+                } else {
+                    currentUser = null;
+                    if (authModal) authModal.style.display = 'flex';
+                    console.log('用戶未登入');
+                }
+            });
+
+            // 登入功能
+            const loginButton = document.getElementById('login-button');
+            if (loginButton) {
+                loginButton.addEventListener('click', async function() {
+                    const email = document.getElementById('auth-email').value;
+                    const password = document.getElementById('auth-password').value;
+                    
+                    if (!email || !password) {
+                        alert('請輸入郵箱和密碼');
+                        return;
+                    }
+                    
+                    try {
+                        await auth.signInWithEmailAndPassword(email, password);
+                        console.log('登入成功');
+                    } catch (error) {
+                        alert('登入失敗: ' + error.message);
+                        console.error('登入錯誤:', error);
+                    }
+                });
+            }
+
+            // 註冊功能
+            const signupButton = document.getElementById('signup-button');
+            if (signupButton) {
+                signupButton.addEventListener('click', async function() {
+                    const email = document.getElementById('auth-email').value;
+                    const password = document.getElementById('auth-password').value;
+                    
+                    if (!email || !password) {
+                        alert('請輸入郵箱和密碼');
+                        return;
+                    }
+                    
+                    if (password.length < 6) {
+                        alert('密碼至少需要6位字符');
+                        return;
+                    }
+                    
+                    try {
+                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                        const user = userCredential.user;
+                        
+                        // 創建用戶文檔
+                        await db.collection('users').doc(user.uid).set({
+                            email: user.email,
+                            name: user.email.split('@')[0],
+                            phone: '',
+                            vipLevel: 0,
+                            balance: 0,
+                            coinBalance: 0,
+                            couponCount: 0,
+                            inviteCode: generateInviteCode(),
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        alert('註冊成功！歡迎使用ONEPAY拍吧！');
+                        console.log('用戶註冊成功:', user.email);
+                        
+                    } catch (error) {
+                        alert('註冊失敗: ' + error.message);
+                        console.error('註冊錯誤:', error);
+                    }
+                });
+            }
+
+            // 忘記密碼
+            const forgotPassword = document.getElementById('forgot-password');
+            if (forgotPassword) {
+                forgotPassword.addEventListener('click', async function(e) {
+                    e.preventDefault();
+                    const email = document.getElementById('auth-email').value;
+                    
+                    if (!email) {
+                        alert('請輸入您的電子郵件地址');
+                        return;
+                    }
+                    
+                    try {
+                        await auth.sendPasswordResetEmail(email);
+                        alert('密碼重置郵件已發送至 ' + email);
+                    } catch (error) {
+                        alert('發送失敗: ' + error.message);
+                    }
+                });
+            }
+
+            // 管理後台登入
+            const adminLoginBtn = document.getElementById('admin-login-btn');
+            if (adminLoginBtn) {
+                adminLoginBtn.addEventListener('click', function() {
+                    const password = document.getElementById('admin-password').value;
+                    
+                    if (password === ADMIN_PASSWORD) {
+                        isAdminMode = true;
+                        document.getElementById('admin-modal').style.display = 'none';
+                        showAdminDashboard();
+                    } else {
+                        alert('管理密碼錯誤！');
+                    }
+                });
+            }
+
+            // 登出功能
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function() {
+                    if (confirm('確定要退出登錄嗎？')) {
+                        try {
+                            await auth.signOut();
+                            alert('已退出登錄');
+                            isAdminMode = false;
+                        } catch (error) {
+                            console.error('退出登錄失敗:', error);
+                        }
+                    }
+                });
+            }
+
+            // ==============================
+            // 頁面管理代碼（簡化版）
+            // ==============================
+            
             const pages = {
                 'home': document.getElementById('home-page'),
                 'buy': document.getElementById('buy-page'),
@@ -3269,483 +2573,181 @@ console.log('ONEPAY拍吧系統已加載，等待Firebase初始化...');
                 'profile': document.getElementById('profile-page')
             };
             
-            let currentPage = 'home';
+            // 簡單的頁面切換
+            document.getElementById('nav-home')?.addEventListener('click', () => showPage('home'));
+            document.getElementById('nav-buy')?.addEventListener('click', () => showPage('buy'));
+            document.getElementById('nav-ship')?.addEventListener('click', () => showPage('ship'));
+            document.getElementById('nav-profile')?.addEventListener('click', () => showPage('profile'));
+            document.getElementById('nav-search')?.addEventListener('click', () => showPage('search'));
             
-            // 底部導航按鈕
-            const navButtons = {
-                'home': document.getElementById('nav-home'),
-                'buy': document.getElementById('nav-buy'),
-                'ship': document.getElementById('nav-ship'),
-                'profile': document.getElementById('nav-profile'),
-                'search': document.getElementById('nav-search')
-            };
-            
-            // 導航圖標元素
-            const navIcons = {
-                'home': document.getElementById('nav-home-icon'),
-                'buy': document.getElementById('nav-buy-icon'),
-                'ship': document.getElementById('nav-ship-icon'),
-                'profile': document.getElementById('nav-profile-icon')
-            };
-            
-            const navSymbols = {
-                'home': document.getElementById('nav-home-symbol'),
-                'buy': document.getElementById('nav-buy-symbol'),
-                'ship': document.getElementById('nav-ship-symbol'),
-                'profile': document.getElementById('nav-profile-symbol')
-            };
-            
-            const navTexts = {
-                'home': document.getElementById('nav-home-text'),
-                'buy': document.getElementById('nav-buy-text'),
-                'ship': document.getElementById('nav-ship-text'),
-                'profile': document.getElementById('nav-profile-text')
-            };
-            
-            // 顯示指定頁面
             function showPage(pageId) {
-                // 隱藏所有頁面
                 Object.values(pages).forEach(page => {
-                    page.classList.remove('active');
+                    if (page) page.classList.remove('active');
                 });
-                
-                // 顯示目標頁面
-                pages[pageId].classList.add('active');
-                currentPage = pageId;
-                
-                // 更新導航狀態
-                updateNavState(pageId);
+                if (pages[pageId]) pages[pageId].classList.add('active');
             }
             
-            // 更新導航狀態
-            function updateNavState(activePage) {
-                // 重置所有導航狀態
-                Object.keys(navIcons).forEach(key => {
-                    navIcons[key].classList.remove('active');
-                    navIcons[key].classList.remove('jumping');
-                    navSymbols[key].classList.remove('active');
-                    navTexts[key].classList.remove('active');
-                    navTexts[key].classList.add('inactive');
-                });
-                
-                // 設置當前活動導航
-                if (navIcons[activePage]) {
-                    navIcons[activePage].classList.add('active');
-                    navIcons[activePage].classList.add('jumping');
-                    navSymbols[activePage].classList.add('active');
-                    navTexts[activePage].classList.add('active');
-                    navTexts[activePage].classList.remove('inactive');
-                    
-                    // 移除跳動動畫類
-                    setTimeout(() => {
-                        navIcons[activePage].classList.remove('jumping');
-                    }, 300);
-                }
-            }
-            
-            // 底部導航點擊事件
-            navButtons.home.addEventListener('click', () => {
-                showPage('home');
-            });
-            
-            navButtons.buy.addEventListener('click', () => {
-                showPage('buy');
-            });
-            
-            navButtons.ship.addEventListener('click', () => {
-                showPage('ship');
-            });
-            
-            navButtons.profile.addEventListener('click', () => {
-                showPage('profile');
-            });
-            
-            navButtons.search.addEventListener('click', () => {
-                showPage('search');
-            });
-            
-            // 返回按鈕事件
-            document.querySelectorAll('.back-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (currentPage !== 'home') {
-                        showPage('home');
-                    }
-                });
-            });
-            
-            // 廣告輪播功能（僅在首頁）
-            const slides = document.querySelectorAll('.ad-slide');
-            const indicators = document.querySelectorAll('.slide-indicator');
-            let currentSlide = 0;
-            
-            function showSlide(index) {
-                slides.forEach(slide => slide.classList.remove('active'));
-                indicators.forEach(indicator => indicator.classList.remove('active'));
-                
-                slides[index].classList.add('active');
-                indicators[index].classList.add('active');
-                currentSlide = index;
-            }
-            
-            indicators.forEach((indicator, index) => {
-                indicator.addEventListener('click', () => showSlide(index));
-            });
-            
-            // 自動輪播
-            let slideInterval = setInterval(() => {
-                if (currentPage === 'home' && slides.length > 0) {
-                    let nextSlide = currentSlide + 1;
-                    if (nextSlide >= slides.length) nextSlide = 0;
-                    showSlide(nextSlide);
-                }
-            }, 4000);
-            
-            // 當頁面切換時重置輪播
-            function resetCarousel() {
-                clearInterval(slideInterval);
-                if (currentPage === 'home') {
-                    slideInterval = setInterval(() => {
-                        let nextSlide = currentSlide + 1;
-                        if (nextSlide >= slides.length) nextSlide = 0;
-                        showSlide(nextSlide);
-                    }, 4000);
-                }
-            }
-            
-            // FAB懸浮按鈕功能
-            const fabMain = document.getElementById('fab-main');
-            const fabMenu = document.getElementById('fab-menu');
-            const fabIcon = document.getElementById('fab-icon');
-            let fabMenuOpen = false;
-            
-            fabMain.addEventListener('click', function(e) {
-                e.stopPropagation();
-                fabMenuOpen = !fabMenuOpen;
-                
-                if (fabMenuOpen) {
-                    // 展開動畫
-                    fabMenu.classList.add('active');
-                    fabMain.style.transform = 'rotate(135deg) scale(1.1)';
-                    fabIcon.className = 'fas fa-times';
-                    
-                    // 添加展開動畫效果
-                    fabMain.style.boxShadow = '0 10px 28px rgba(0, 0, 0, 0.3)';
-                } else {
-                    // 收起動畫
-                    fabMenu.classList.remove('active');
-                    fabMain.style.transform = 'rotate(0deg) scale(1)';
-                    fabIcon.className = 'fas fa-plus';
-                    
-                    // 重置陰影
-                    fabMain.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
-                    
-                    // 隱藏FAB項目動畫
-                    document.querySelectorAll('.fab-item').forEach(item => {
-                        item.style.opacity = '0';
-                        item.style.transform = 'translateY(10px)';
-                    });
-                }
-            });
-            
-            // FAB二級菜單功能
-            document.querySelector('.quick-buy').addEventListener('click', function() {
-                alert('打开快速代购功能');
-                closeFABMenu();
-            });
-            
-            document.querySelector('.package-forecast').addEventListener('click', function() {
-                alert('打开包裹预报功能');
-                closeFABMenu();
-            });
-            
-            document.querySelector('.contact-service').addEventListener('click', function() {
-                alert('联系在线客服');
-                closeFABMenu();
-            });
-            
-            function closeFABMenu() {
-                fabMenu.classList.remove('active');
-                fabMenuOpen = false;
-                fabMain.style.transform = 'rotate(0deg) scale(1)';
-                fabIcon.className = 'fas fa-plus';
-                fabMain.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
-                
-                // 隱藏FAB項目動畫
-                document.querySelectorAll('.fab-item').forEach(item => {
-                    item.style.opacity = '0';
-                    item.style.transform = 'translateY(10px)';
-                });
-            }
-            
-            // 點擊屏幕其他地方關閉FAB菜單
-            document.addEventListener('click', function(event) {
-                if (fabMenuOpen && !fabMain.contains(event.target) && !fabMenu.contains(event.target)) {
-                    closeFABMenu();
-                }
-            });
-            
-            // 代購頁面篩選標籤點擊
-            document.querySelectorAll('.filter-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // 移除所有標籤的active類
-                    document.querySelectorAll('.filter-tab').forEach(t => {
-                        t.classList.remove('active');
-                    });
-                    
-                    // 為當前點擊的標籤添加active類
-                    this.classList.add('active');
-                    
-                    // 顯示對應的訂單列表
-                    const filterType = this.textContent;
-                    alert(`筛选${filterType}订单`);
-                });
-            });
-            
-            // 轉運頁面篩選標籤點擊
-            document.querySelectorAll('.package-tab').forEach(tab => {
-                tab.addEventListener('click', function() {
-                    // 移除所有標籤的active類
-                    document.querySelectorAll('.package-tab').forEach(t => {
-                        t.classList.remove('active');
-                    });
-                    
-                    // 為當前點擊的標籤添加active類
-                    this.classList.add('active');
-                    
-                    // 顯示對應的包裹列表
-                    const filterType = this.textContent;
-                    alert(`筛选${filterType}`);
-                });
-            });
-            
-            // 搜尋頁面功能
-            const searchInput = document.getElementById('search-input');
-            const searchCancel = document.getElementById('search-cancel');
-            const searchResults = document.getElementById('search-results');
-            const searchTags = document.querySelectorAll('.search-tag');
-            const clearHistory = document.getElementById('clear-history');
-            
-            searchInput.addEventListener('focus', function() {
-                searchCancel.style.display = 'inline';
-            });
-            
-            searchCancel.addEventListener('click', function() {
-                searchInput.value = '';
-                searchCancel.style.display = 'none';
-                searchResults.classList.add('hidden');
-                searchInput.blur();
-            });
-            
-            searchInput.addEventListener('input', function() {
-                if (searchInput.value.trim() !== '') {
-                    searchResults.classList.remove('hidden');
-                } else {
-                    searchResults.classList.add('hidden');
-                }
-            });
-            
-            // 搜尋標籤點擊
-            searchTags.forEach(tag => {
-                tag.addEventListener('click', function() {
-                    searchInput.value = this.textContent;
-                    searchResults.classList.remove('hidden');
-                });
-            });
-            
-            // 清空搜尋歷史
-            clearHistory.addEventListener('click', function() {
-                if (confirm('确定要清空搜索历史吗？')) {
-                    document.querySelectorAll('.history-item').forEach(item => {
-                        item.remove();
-                    });
-                }
-            });
-            
-            // 搜尋歷史刪除
-            document.querySelectorAll('.history-delete').forEach(icon => {
-                icon.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    this.closest('.history-item').remove();
-                });
-            });
-            
-            // 個人中心功能菜單點擊
-            document.querySelectorAll('.function-menu-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const page = this.getAttribute('data-page');
-                    const pageNames = {
-                        'calculator': '代购试算',
-                        'douyin-recharge': '抖钻代储',
-                        'messages': '站内信',
-                        'warehouse': '我的仓库',
-                        'forecast': '预报包裹',
-                        'packages': '我的包裹',
-                        'help': '帮助中心',
-                        'customer-service': '在线客服'
-                    };
-                    alert(`跳转到${pageNames[page]}页面`);
-                });
-            });
-            
-            // 快速統計卡片點擊
-            document.querySelectorAll('.quick-stat-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const text = this.querySelector('.quick-stat-text').textContent;
-                    alert(`查看${text}详情`);
-                });
-            });
-            
-            // 續費按鈕點擊
-            document.querySelector('.vip-renew-btn-premium').addEventListener('click', function() {
-                alert('打开会员续费页面');
-            });
-            
-            // 查看詳情按鈕點擊
-            document.querySelector('.vip-view-detail').addEventListener('click', function(e) {
-                e.preventDefault();
-                alert('查看当前尊享会员权益详情');
-            });
-            
-            // 設置按鈕點擊
-            const settingsBtn = document.getElementById('settings-btn');
-            const settingsModal = document.getElementById('settings-modal');
-            const settingsClose = document.getElementById('settings-close');
-            
-            settingsBtn.addEventListener('click', function() {
-                settingsModal.classList.add('active');
-            });
-            
-            settingsClose.addEventListener('click', function() {
-                settingsModal.classList.remove('active');
-            });
-            
-            // 點擊模態框外部關閉
-            settingsModal.addEventListener('click', function(event) {
-                if (event.target === settingsModal) {
-                    settingsModal.classList.remove('active');
-                }
-            });
-            
-            // 設置項目點擊
-            document.querySelectorAll('.settings-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const id = this.id;
-                    const actionNames = {
-                        'edit-profile': '修改用户资料',
-                        'edit-phone': '用户电话',
-                        'edit-email': '用户信箱',
-                        'account-auth': '账号授权',
-                        'change-password': '修改密码',
-                        'recover-password': '找回密码',
-                        'change-language': '切换语言',
-                        'switch-account': '注销账户'
-                    };
-                    alert(`打开${actionNames[id]}设置`);
-                });
-            });
-            
-            // 退出登錄按鈕
-            document.getElementById('logout-btn').addEventListener('click', function() {
-                if (confirm('确定要退出登录吗？')) {
-                    alert('已退出登录');
-                    showPage('home');
-                    settingsModal.classList.remove('active');
-                }
-            });
-            
-            // 首頁功能點擊事件
-            document.querySelector('.buy-order').addEventListener('click', function() {
-                showPage('buy');
-            });
-            
-            document.querySelector('.ship-order').addEventListener('click', function() {
-                showPage('ship');
-            });
-            
-            document.querySelectorAll('.quick-nav-item').forEach(item => {
-                item.addEventListener('click', function() {
-                    const text = this.querySelector('.quick-nav-text').textContent;
-                    alert(`打开${text}功能`);
-                });
-            });
-            
-            document.querySelector('.membership-btn').addEventListener('click', function() {
-                alert('查看会员方案详情');
-            });
-            
-            document.querySelector('.experience-btn').addEventListener('click', function() {
-                alert('开始立即体验服务');
-            });
-            
-            document.querySelector('.view-all-orders').addEventListener('click', function() {
-                showPage('buy');
-            });
-            
-            document.querySelector('.notification-btn').addEventListener('click', function() {
-                alert('查看通知消息');
-            });
-            
-            document.querySelectorAll('.order-item').forEach(order => {
-                order.addEventListener('click', function() {
-                    const title = this.querySelector('h4').textContent;
-                    alert(`查看订单详情：${title}`);
-                });
-            });
-            
-            // 模擬實時更新訂單數量
-            function updateOrderCounts() {
-                const buyCount = Math.floor(Math.random() * 5) + 1;
-                const shipCount = Math.floor(Math.random() * 4) + 1;
-                
-                const buyCountEl = document.querySelector('.buy-order-count');
-                const shipCountEl = document.querySelector('.ship-order-count');
-                
-                if (buyCountEl) buyCountEl.textContent = `${buyCount} 单`;
-                if (shipCountEl) shipCountEl.textContent = `${shipCount} 单`;
-            }
-            
-            // 每30秒更新一次訂單數量
-            updateOrderCounts();
-            setInterval(updateOrderCounts, 30000);
-            
-            // 初始設置首頁為活動狀態
+            // 初始化顯示首頁
             showPage('home');
             
-            // 監聽頁面切換以重置輪播
-            const originalShowPage = showPage;
-            showPage = function(pageId) {
-                originalShowPage(pageId);
-                resetCarousel();
-            };
-        });
-    </script>
-<!-- 登入/註冊模態框 -->
-<div class="auth-modal" id="auth-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
-    <div class="auth-content" style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px;">
-        <h2 style="text-align: center; margin-bottom: 20px;">登入 ONEPAY拍吧</h2>
-        
-        <div style="margin-bottom: 20px;">
-            <input type="email" id="auth-email" placeholder="電子郵件" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px;">
-            <input type="password" id="auth-password" placeholder="密碼" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px;">
-        </div>
-        
-        <button id="login-button" style="width: 100%; padding: 15px; background: #000; color: white; border: none; border-radius: 10px; font-weight: bold; margin-bottom: 10px;">登入</button>
-        <button id="signup-button" style="width: 100%; padding: 15px; background: #fff; color: #000; border: 1px solid #000; border-radius: 10px; font-weight: bold;">註冊新帳號</button>
-        
-        <div style="text-align: center; margin-top: 20px;">
-            <a href="#" id="forgot-password" style="color: #666; text-decoration: none;">忘記密碼？</a>
-        </div>
-    </div>
-</div>
+            // 廣告輪播
+            let currentSlide = 0;
+            const slides = document.querySelectorAll('.ad-slide');
+            if (slides.length > 0) {
+                setInterval(() => {
+                    slides.forEach(slide => slide.classList.remove('active'));
+                    currentSlide = (currentSlide + 1) % slides.length;
+                    slides[currentSlide].classList.add('active');
+                }, 4000);
+            }
+            
+            // FAB按鈕
+            const fabMain = document.getElementById('fab-main');
+            if (fabMain) {
+                fabMain.addEventListener('click', function() {
+                    const fabMenu = document.getElementById('fab-menu');
+                    if (fabMenu) {
+                        fabMenu.classList.toggle('active');
+                    }
+                });
+            }
+            
+            // 快速代購功能
+            document.querySelector('.quick-buy')?.addEventListener('click', function() {
+                if (!currentUser) {
+                    alert('請先登入！');
+                    document.getElementById('auth-modal').style.display = 'flex';
+                    return;
+                }
+                const productName = prompt('請輸入商品名稱：');
+                if (!productName) return;
+                const productPrice = parseFloat(prompt('請輸入商品價格（人民幣）：'));
+                if (isNaN(productPrice)) return;
+                createBuyOrder(productName, productPrice);
+            });
+            
+            // 包裹預報功能
+            document.querySelector('.package-forecast')?.addEventListener('click', function() {
+                if (!currentUser) {
+                    alert('請先登入！');
+                    document.getElementById('auth-modal').style.display = 'flex';
+                    return;
+                }
+                const trackingNumber = prompt('請輸入快遞單號：');
+                if (!trackingNumber) return;
+                const carrier = prompt('請輸入快遞公司：');
+                if (!carrier) return;
+                createPackage(trackingNumber, carrier);
+            });
+            
+        }); // DOMContentLoaded結束
 
-<!-- 管理後台登入模態框 -->
-<div class="admin-modal" id="admin-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
-    <div class="admin-content" style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px;">
-        <h2 style="text-align: center; margin-bottom: 20px;">管理後台登入</h2>
-        <input type="password" id="admin-password" placeholder="管理密碼" style="width: 100%; padding: 15px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 10px;">
-        <button id="admin-login-btn" style="width: 100%; padding: 15px; background: #000; color: white; border: none; border-radius: 10px; font-weight: bold;">進入管理後台</button>
-        <button id="admin-cancel" style="width: 100%; padding: 15px; background: #fff; color: #000; border: 1px solid #000; border-radius: 10px; font-weight: bold; margin-top: 10px;">取消</button>
-    </div>
-</div>
+        // ==============================
+        // Firebase數據操作函數
+        // ==============================
+        
+        async function updateUserProfile(user) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    
+                    // 更新個人中心顯示
+                    const userNameElement = document.querySelector('.user-name-large');
+                    if (userNameElement && userData) {
+                        userNameElement.textContent = userData.name;
+                    }
+                    
+                    // 更新VIP卡片
+                    const balanceElements = document.querySelectorAll('.vip-balance-value-premium');
+                    if (balanceElements.length >= 3) {
+                        balanceElements[0].textContent = userData.balance.toFixed(2);
+                        balanceElements[1].textContent = userData.coinBalance.toFixed(2);
+                        balanceElements[2].textContent = userData.couponCount;
+                    }
+                }
+            } catch (error) {
+                console.error('更新用戶資料失敗:', error);
+            }
+        }
+
+        async function createBuyOrder(productName, productPrice, quantity = 1) {
+            if (!currentUser) {
+                alert('請先登入！');
+                return;
+            }
+            
+            try {
+                const serviceFee = Math.max(30, productPrice * 0.1); // 10%服務費，最低30
+                const shippingFee = 50;
+                const total = productPrice * quantity + serviceFee + shippingFee;
+                
+                const orderData = {
+                    userId: currentUser.uid,
+                    type: 'buy',
+                    status: 'pending_payment',
+                    productName: productName,
+                    productPrice: productPrice,
+                    quantity: quantity,
+                    serviceFee: serviceFee,
+                    shippingFee: shippingFee,
+                    total: total,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('orders').add(orderData);
+                alert('訂單創建成功！');
+                
+            } catch (error) {
+                alert('創建訂單失敗: ' + error.message);
+                console.error('訂單創建錯誤:', error);
+            }
+        }
+
+        async function createPackage(trackingNumber, carrier, content = '') {
+            if (!currentUser) {
+                alert('請先登入！');
+                return;
+            }
+            
+            try {
+                const packageData = {
+                    userId: currentUser.uid,
+                    trackingNumber: trackingNumber,
+                    carrier: carrier,
+                    content: content,
+                    warehouse: 'us_ny',
+                    status: 'not_stored',
+                    items: [],
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('packages').add(packageData);
+                alert('包裹預報成功！');
+                
+            } catch (error) {
+                alert('包裹預報失敗: ' + error.message);
+                console.error('包裹預報錯誤:', error);
+            }
+        }
+
+        // 管理後台功能
+        function showAdminDashboard() {
+            const adminHTML = `
+                <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:2000;padding:20px;">
+                    <h2>ONEPAY拍吧管理後台</h2>
+                    <p>管理功能已啟用</p>
+                    <button onclick="this.parentElement.remove();isAdminMode=false;">返回</button>
+                </div>
+            `;
+            const div = document.createElement('div');
+            div.innerHTML = adminHTML;
+            document.body.appendChild(div);
+        }
+
+        // 初始化完成
+        console.log('ONEPAY拍吧系統已初始化完成');
+        
+    </script>
 </body>
 </html>
