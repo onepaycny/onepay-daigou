@@ -2368,170 +2368,192 @@
     </div>
 
     <script>
-// ==============================
-// Firebase 配置和初始化
-// ==============================
+// 找到現有的DOMContentLoaded事件監聽器
+// 將所有JavaScript代碼包裹在一個DOMContentLoaded事件中
 
-// 替換為您的Firebase配置
-const firebaseConfig = {
-    apiKey: "AIzaSyAUgbncfETG8MtScJyEXl0RyCqyY8pCbQc",
-    authDomain: "onepay-96552.firebaseapp.com",
-    projectId: "onepay-96552",
-    storageBucket: "onepay-96552.firebasestorage.app",
-    messagingSenderId: "554466443215",
-    appId: "1:554466443215:web:8a31efb7bee8c7bdd6dcba"
-};
-
-// 初始化Firebase
-firebase.initializeApp(firebaseConfig);
-
-// 初始化Firebase服務
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
-
-// 全局變量
-let currentUser = null;
-let isAdminMode = false;
-const ADMIN_PASSWORD = "onepay888"; // 管理密碼
-
-// ==============================
-// 用戶認證功能
-// ==============================
-
-// 檢查用戶登入狀態
-auth.onAuthStateChanged(user => {
-    const authModal = document.getElementById('auth-modal');
+document.addEventListener('DOMContentLoaded', function() {
+    // ==============================
+    // Firebase 配置和初始化
+    // ==============================
     
-    if (user) {
-        // 用戶已登入
-        currentUser = user;
-        authModal.style.display = 'none';
+    // 🔥 替換為您的Firebase配置
+    const firebaseConfig = {
+        apiKey: "AIzaSyBdpWnNt2W8aam-WLMwN7J9KuJgya74",
+        authDomain: "onepay-daigou.firebaseapp.com",
+        projectId: "onepay-daigou",
+        storageBucket: "onepay-daigou.firebasestorage.app",
+        messagingSenderId: "267936185399",
+        appId: "1:267936185399:web:90cf6e3e976c6cb213b2"
+    };
+
+    // 初始化Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // 初始化Firebase服務
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const storage = firebase.storage();
+
+    // 全局變量
+    let currentUser = null;
+    let isAdminMode = false;
+    const ADMIN_PASSWORD = "onepay888"; // 管理密碼
+
+    // ==============================
+    // 用戶認證功能
+    // ==============================
+
+    // 檢查用戶登入狀態
+    auth.onAuthStateChanged(user => {
+        const authModal = document.getElementById('auth-modal');
         
-        // 更新用戶界面
-        updateUserProfile(user);
+        if (user) {
+            // 用戶已登入
+            currentUser = user;
+            authModal.style.display = 'none';
+            
+            // 更新用戶界面
+            updateUserProfile(user);
+            
+            // 檢查用戶文檔是否存在
+            checkUserDocument(user);
+            
+            // 加載用戶數據
+            loadUserData();
+            
+        } else {
+            // 用戶未登入，顯示登入模態框
+            currentUser = null;
+            authModal.style.display = 'flex';
+        }
+    });
+
+    // 登入功能
+    document.getElementById('login-button').addEventListener('click', async function() {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
         
-        // 檢查用戶文檔是否存在
-        checkUserDocument(user);
+        try {
+            await auth.signInWithEmailAndPassword(email, password);
+            // 登入成功，模態框會自動關閉
+        } catch (error) {
+            alert('登入失敗: ' + error.message);
+        }
+    });
+
+    // 註冊功能
+    document.getElementById('signup-button').addEventListener('click', async function() {
+        const email = document.getElementById('auth-email').value;
+        const password = document.getElementById('auth-password').value;
         
-        // 加載用戶數據
-        loadUserData();
+        try {
+            const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+            const user = userCredential.user;
+            
+            // 創建用戶文檔
+            await db.collection('users').doc(user.uid).set({
+                email: user.email,
+                name: user.email.split('@')[0],
+                phone: '',
+                vipLevel: 0,
+                balance: 0,
+                coinBalance: 0,
+                couponCount: 0,
+                inviteCode: generateInviteCode(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            
+            alert('註冊成功！歡迎使用ONEPAY拍吧！');
+        } catch (error) {
+            alert('註冊失敗: ' + error.message);
+        }
+    });
+
+    // 忘記密碼功能
+    document.getElementById('forgot-password').addEventListener('click', async function(e) {
+        e.preventDefault();
+        const email = document.getElementById('auth-email').value;
         
-    } else {
-        // 用戶未登入，顯示登入模態框
-        currentUser = null;
-        authModal.style.display = 'flex';
+        if (!email) {
+            alert('請輸入您的電子郵件地址');
+            return;
+        }
+        
+        try {
+            await auth.sendPasswordResetEmail(email);
+            alert('密碼重置郵件已發送至 ' + email);
+        } catch (error) {
+            alert('發送失敗: ' + error.message);
+        }
+    });
+
+    // ==============================
+    // 工具函數
+    // ==============================
+
+    function generateInviteCode() {
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let code = '';
+        for (let i = 0; i < 8; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
     }
+
+    function formatDate(timestamp) {
+        if (!timestamp) return '未知時間';
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    async function checkUserDocument(user) {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        if (!userDoc.exists) {
+            await db.collection('users').doc(user.uid).set({
+                email: user.email,
+                name: user.displayName || user.email.split('@')[0],
+                phone: '',
+                vipLevel: 0,
+                balance: 0,
+                coinBalance: 0,
+                couponCount: 0,
+                inviteCode: generateInviteCode(),
+                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        }
+    }
+
+    async function updateUserProfile(user) {
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        const userData = userDoc.data();
+        
+        const userNameElement = document.querySelector('.user-name-large');
+        if (userNameElement && userData) {
+            userNameElement.textContent = userData.name;
+        }
+        
+        const userIdElement = document.querySelector('.user-id-code');
+        if (userIdElement) {
+            userIdElement.textContent = '用戶ID: ' + user.uid.substring(0, 8);
+        }
+        
+        const inviteElement = document.querySelector('.invite-code');
+        if (inviteElement && userData.inviteCode) {
+            inviteElement.textContent = '邀請碼: ' + userData.inviteCode;
+        }
+    }
+
+    // ==============================
+    // 頁面管理代碼（原有）
+    // ==============================
+    
+    // ... 這裡插入您原有的頁面切換、FAB按鈕等代碼 ...
+    // 確保所有DOM操作都在這個事件監聽器內
+    
 });
-
-// 登入功能
-document.getElementById('login-button').addEventListener('click', async function() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    
-    try {
-        await auth.signInWithEmailAndPassword(email, password);
-        // 登入成功，模態框會自動關閉
-    } catch (error) {
-        alert('登入失敗: ' + error.message);
-    }
-});
-
-// 註冊功能
-document.getElementById('signup-button').addEventListener('click', async function() {
-    const email = document.getElementById('auth-email').value;
-    const password = document.getElementById('auth-password').value;
-    
-    try {
-        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
-        const user = userCredential.user;
-        
-        // 創建用戶文檔
-        await db.collection('users').doc(user.uid).set({
-            email: user.email,
-            name: user.email.split('@')[0], // 使用郵件前綴作為預設名稱
-            phone: '',
-            vipLevel: 0,
-            balance: 0,
-            coinBalance: 0,
-            couponCount: 0,
-            inviteCode: generateInviteCode(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        
-        alert('註冊成功！歡迎使用ONEPAY拍吧！');
-    } catch (error) {
-        alert('註冊失敗: ' + error.message);
-    }
-});
-
-// 忘記密碼功能
-document.getElementById('forgot-password').addEventListener('click', async function(e) {
-    e.preventDefault();
-    const email = document.getElementById('auth-email').value;
-    
-    if (!email) {
-        alert('請輸入您的電子郵件地址');
-        return;
-    }
-    
-    try {
-        await auth.sendPasswordResetEmail(email);
-        alert('密碼重置郵件已發送至 ' + email);
-    } catch (error) {
-        alert('發送失敗: ' + error.message);
-    }
-});
-
-// ==============================
-// 用戶數據管理
-// ==============================
-
-// 檢查用戶文檔是否存在
-async function checkUserDocument(user) {
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    
-    if (!userDoc.exists) {
-        // 創建用戶文檔（應該不會發生，但以防萬一）
-        await db.collection('users').doc(user.uid).set({
-            email: user.email,
-            name: user.displayName || user.email.split('@')[0],
-            phone: '',
-            vipLevel: 0,
-            balance: 0,
-            coinBalance: 0,
-            couponCount: 0,
-            inviteCode: generateInviteCode(),
-            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-    }
-}
-
-// 更新用戶界面
-async function updateUserProfile(user) {
-    // 獲取用戶數據
-    const userDoc = await db.collection('users').doc(user.uid).get();
-    const userData = userDoc.data();
-    
-    // 更新個人中心頁面
-    const userNameElement = document.querySelector('.user-name-large');
-    if (userNameElement && userData) {
-        userNameElement.textContent = userData.name;
-    }
-    
-    // 更新用戶ID顯示
-    const userIdElement = document.querySelector('.user-id-code');
-    if (userIdElement) {
-        userIdElement.textContent = '用戶ID: ' + user.uid.substring(0, 8);
-    }
-    
-    // 更新邀請碼
-    const inviteElement = document.querySelector('.invite-code');
-    if (inviteElement && userData.inviteCode) {
-        inviteElement.textContent = '邀請碼: ' + userData.inviteCode;
-    }
     
     // 更新VIP卡片數據
     updateVIPCard(userData);
