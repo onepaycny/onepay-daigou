@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ONEPAY拍吧 - 跨境代购集运系统</title>
     
-    <!-- 替換Tailwind CSS CDN -->
+    <!-- Tailwind CSS -->
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -1586,811 +1586,81 @@
 </head>
 <body>
     <div class="phone-frame">
+        <!-- 臨時登入按鈕（測試用） -->
+        <div id="temp-login-btn" style="position: absolute; top: 80px; right: 20px; z-index: 1000;">
+            <button onclick="showLoginModal()" 
+                    style="background: #000; color: white; padding: 8px 16px; border-radius: 8px; border: none; font-size: 12px;">
+                點此登入/註冊
+            </button>
+        </div>
+        
+        <!-- 原有HTML結構保持不變 -->
         <div class="phone-notch"></div>
         
-        <!-- 主要內容區域 -->
         <div class="screen-content">
-            <!-- 首頁 -->
-            <div id="home-page" class="page-container active">
-                <!-- 頂部導航欄 -->
-                <div class="sticky top-0 z-40 bg-white border-b border-gray-200">
-                    <div class="flex items-center justify-between px-5 pt-10 pb-4">
-                        <!-- LOGO區域 -->
-                        <div class="flex items-center space-x-2">
-                            <div class="w-8 h-8 rounded-lg bg-gradient-black flex items-center justify-center shadow-md">
-                                <span class="text-white font-bold text-sm">P</span>
-                            </div>
-                            <h1 class="text-lg font-bold text-gradient-black single-line">ONEPAY拍吧</h1>
-                        </div>
-                        
-                        <!-- 通知鈴鐺 -->
-                        <div class="relative">
-                            <button class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-all notification-btn">
-                                <i class="fas fa-bell text-gray-700 text-lg"></i>
-                                <div class="notification-dot"></div>
-                            </button>
-                        </div>
-                    </div>
+            <!-- 各個頁面... -->
+        </div>
+        
+        <!-- FAB按鈕、底部導航等... -->
+        
+        <!-- ========== 登入/註冊模態框 ========== -->
+        <div class="auth-modal" id="auth-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
+            <div class="auth-content" style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px;">
+                <h2 style="text-align: center; margin-bottom: 20px; font-weight: bold;">登入 ONEPAY拍吧</h2>
+                
+                <div style="margin-bottom: 20px;">
+                    <input type="email" id="auth-email" placeholder="電子郵件" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px;">
+                    <input type="password" id="auth-password" placeholder="密碼" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px;">
                 </div>
                 
-                <!-- 主要內容 -->
-                <div class="px-4 pt-2">
-                    <!-- 廣告輪播區域 -->
-                    <div class="section-spacing fade-in">
-                        <div class="ad-slider" id="ad-slider">
-                            <!-- 廣告圖片1 -->
-                            <div class="ad-slide active" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <div class="h-full flex flex-col items-center justify-center p-6 text-white">
-                                    <i class="fas fa-globe-americas text-4xl mb-3 opacity-80"></i>
-                                    <h3 class="text-lg font-bold mb-1 single-line">全球代购服务</h3>
-                                    <p class="text-sm opacity-90 text-center">覆盖日本、韩国、欧美等地区</p>
-                                </div>
-                            </div>
-                            
-                            <!-- 廣告圖片2 -->
-                            <div class="ad-slide" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                                <div class="h-full flex flex-col items-center justify-center p-6 text-white">
-                                    <i class="fas fa-shipping-fast text-4xl mb-3 opacity-80"></i>
-                                    <h3 class="text-lg font-bold mb-1 single-line">专业转运服务</h3>
-                                    <p class="text-sm opacity-90 text-center">免税州仓库，快速清关</p>
-                                </div>
-                            </div>
-                            
-                            <!-- 廣告圖片3 -->
-                            <div class="ad-slide" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                                <div class="h-full flex flex-col items-center justify-center p-6 text-white">
-                                    <i class="fas fa-crown text-4xl mb-3 opacity-80"></i>
-                                    <h3 class="text-lg font-bold mb-1 single-line">会员尊享特权</h3>
-                                    <p class="text-sm opacity-90 text-center">尊享折扣与优先处理</p>
-                                </div>
-                            </div>
-                            
-                            <!-- 輪播指示器 -->
-                            <div class="slide-indicators">
-                                <div class="slide-indicator active" data-slide="0"></div>
-                                <div class="slide-indicator" data-slide="1"></div>
-                                <div class="slide-indicator" data-slide="2"></div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 訂單類型卡片 -->
-                    <div class="section-spacing fade-in" style="animation-delay: 0.1s;">
-                        <div class="grid grid-cols-2 gap-3">
-                            <!-- 代購訂單 -->
-                            <div class="shadow-card p-4 cursor-pointer hover:shadow-lg transition-all buy-order">
-                                <div class="flex items-center">
-                                    <div class="order-icon-circle order-buy-icon">
-                                        <i class="fas fa-shopping-cart text-white"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between">
-                                            <h3 class="font-semibold text-gray-800 text-sm single-line">代购订单</h3>
-                                        </div>
-                                        <div class="mt-2">
-                                            <p class="text-xs text-gray-600">进行中</p>
-                                            <p class="text-lg font-bold text-gradient-black mt-1 buy-order-count">3 单</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 轉運訂單 -->
-                            <div class="shadow-card p-4 cursor-pointer hover:shadow-lg transition-all ship-order">
-                                <div class="flex items-center">
-                                    <div class="order-icon-circle order-ship-icon">
-                                        <i class="fas fa-shipping-fast text-white"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between">
-                                            <h3 class="font-semibold text-gray-800 text-sm single-line">转运订单</h3>
-                                        </div>
-                                        <div class="mt-2">
-                                            <p class="text-xs text-gray-600">进行中</p>
-                                            <p class="text-lg font-bold text-gradient-black mt-1 ship-order-count">2 单</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 快速功能櫥窗導航列 -->
-                    <div class="section-spacing fade-in" style="animation-delay: 0.15s;">
-                        <div class="quick-nav-grid">
-                            <div class="quick-nav-item nav-guide">
-                                <div class="quick-nav-icon nav-icon-1">
-                                    <i class="fas fa-compass"></i>
-                                </div>
-                                <span class="quick-nav-text">新手指引</span>
-                            </div>
-                            
-                            <div class="quick-nav-item nav-calc">
-                                <div class="quick-nav-icon nav-icon-2">
-                                    <i class="fas fa-calculator"></i>
-                                </div>
-                                <span class="quick-nav-text">代購試算</span>
-                            </div>
-                            
-                            <div class="quick-nav-item nav-wallet">
-                                <div class="quick-nav-icon nav-icon-3">
-                                    <i class="fas fa-wallet"></i>
-                                </div>
-                                <span class="quick-nav-text">錢包充值</span>
-                            </div>
-                            
-                            <div class="quick-nav-item nav-warehouse">
-                                <div class="quick-nav-icon nav-icon-4">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                </div>
-                                <span class="quick-nav-text">倉庫地址</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 會員方案區域 -->
-                    <div class="section-spacing fade-in" style="animation-delay: 0.2s;">
-                        <div class="shadow-card p-5">
-                            <div class="flex items-start justify-between mb-4">
-                                <div class="flex items-center min-w-0">
-                                    <i class="fas fa-crown text-yellow-500 text-base mr-3 flex-shrink-0"></i>
-                                    <h2 class="text-base font-bold text-gray-800 single-line">欢迎来到ONEPAY拍吧</h2>
-                                </div>
-                                <div class="bg-gradient-black text-white text-xs font-medium px-3 py-1 rounded-full flex-shrink-0 ml-2 shadow-sm">
-                                    VIP会员
-                                </div>
-                            </div>
-                            
-                            <p class="text-gray-600 text-xs mb-5">
-                                跨境代购最佳选择，代购、转运一站式服务
-                            </p>
-                            
-                            <div class="grid grid-cols-2 gap-3">
-                                <button class="w-full bg-gradient-black text-white font-medium py-2.5 px-3 rounded-xl flex items-center justify-center hover:opacity-90 transition-all text-xs shadow-md membership-btn">
-                                    <i class="fas fa-crown mr-1.5 text-xs"></i>
-                                    会员方案
-                                </button>
-                                
-                                <button class="w-full border border-gray-300 text-gray-700 font-medium py-2.5 px-3 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-all text-xs shadow-sm experience-btn">
-                                    <i class="fas fa-rocket mr-1.5 text-xs"></i>
-                                    立即体验
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 最新訂單展示 -->
-                    <div class="section-spacing fade-in" style="animation-delay: 0.3s;">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-base font-bold text-gray-800 single-line">最新订单</h3>
-                            <button class="text-xs text-gray-500 font-medium hover:text-gray-700 transition-colors view-all-orders">
-                                查看全部 <i class="fas fa-chevron-right ml-1 text-xs"></i>
-                            </button>
-                        </div>
-                        
-                        <div class="space-y-3">
-                            <!-- 訂單1 -->
-                            <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item">
-                                <div class="flex items-center">
-                                    <div class="order-icon-circle order-buy-icon mr-3">
-                                        <i class="fas fa-box text-white text-sm"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <h4 class="font-medium text-gray-800 text-sm single-line">日本代购 - 索尼耳机</h4>
-                                            <span class="status-badge status-processing">处理中</span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mb-1 single-line">电子产品 · 海外仓已收货</p>
-                                        <p class="text-xs text-gray-400">2023-10-15 14:30</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 訂單2 -->
-                            <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item">
-                                <div class="flex items-center">
-                                    <div class="order-icon-circle order-ship-icon mr-3">
-                                        <i class="fas fa-ship text-white text-sm"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <h4 class="font-medium text-gray-800 text-sm single-line">美国转运 - 服装鞋帽</h4>
-                                            <span class="status-badge status-pending">待支付</span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mb-1 single-line">包裹重量: 2.5kg · 已到库</p>
-                                        <p class="text-xs text-gray-400">2023-10-14 11:20</p>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- 訂單3 -->
-                            <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item">
-                                <div class="flex items-center">
-                                    <div class="order-icon-circle order-buy-icon mr-3">
-                                        <i class="fas fa-gem text-white text-sm"></i>
-                                    </div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="flex items-center justify-between mb-1">
-                                            <h4 class="font-medium text-gray-800 text-sm single-line">韩国美妆 - 兰芝套装</h4>
-                                            <span class="status-badge status-completed">已完成</span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mb-1 single-line">护肤品 · 已签收</p>
-                                        <p class="text-xs text-gray-400">2023-10-13 09:45</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 底部留白區域 -->
-                    <div class="pb-8"></div>
-                </div>
-            </div>
-            
-            <!-- 代購頁 -->
-            <div id="buy-page" class="page-container">
-                <!-- 頂部導航欄 -->
-                <div class="page-header-unified">
-                    <div class="top-search-bar">
-                        <button class="back-button back-btn">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        
-                        <div class="search-box-unified">
-                            <i class="fas fa-search"></i>
-                            <input type="text" placeholder="名稱/主訂單/商品單號">
-                        </div>
-                        
-                        <button class="sort-button" id="time-sort">
-                            <i class="fas fa-sort-amount-down"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- 訂單篩選標籤 -->
-                    <div class="order-filter-tabs">
-                        <div class="filter-tab active">全部</div>
-                        <div class="filter-tab">待支付</div>
-                        <div class="filter-tab">待确认</div>
-                        <div class="filter-tab">采购中</div>
-                        <div class="filter-tab">已采购</div>
-                        <div class="filter-tab">已完成</div>
-                        <div class="filter-tab">退/换货</div>
-                        <div class="filter-tab">已退单</div>
-                    </div>
+                <button id="login-button" style="width: 100%; padding: 15px; background: #000; color: white; border: none; border-radius: 10px; font-weight: bold; margin-bottom: 10px; font-size: 16px; cursor: pointer;">登入</button>
+                <button id="signup-button" style="width: 100%; padding: 15px; background: #fff; color: #000; border: 1px solid #000; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer;">註冊新帳號</button>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <a href="#" id="forgot-password" style="color: #666; text-decoration: none; font-size: 14px;">忘記密碼？</a>
                 </div>
                 
-                <!-- 訂單列表區域 -->
-                <div class="order-list-container">
-                    <div class="empty-order-state">
-                        <div class="empty-order-icon">
-                            <i class="fas fa-shopping-cart"></i>
-                        </div>
-                        <h3 class="text-base font-medium text-gray-800 mb-2">您还没有任何订单</h3>
-                        <p class="text-sm text-gray-500 mb-4">去下单吧</p>
-                        <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all">
-                            立即下单
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 熱門代購推薦 -->
-                <div class="section-spacing">
-                    <div class="flex items-center justify-between px-4 mb-3">
-                        <h2 class="text-base font-bold text-gray-800 single-line">热门代购推荐</h2>
-                        <button class="text-xs text-gray-500 font-medium hover:text-gray-700 transition-colors view-more-hot">
-                            查看更多 <i class="fas fa-chevron-right ml-1 text-xs"></i>
-                        </button>
-                    </div>
-                    
-                    <div class="recommendation-grid">
-                        <!-- 推薦1 -->
-                        <div class="recommendation-card">
-                            <div class="recommendation-image">
-                                <i class="fas fa-laptop text-white text-4xl"></i>
-                            </div>
-                            <div class="recommendation-content">
-                                <h3 class="recommendation-title">MacBook Pro 16寸 M2 Pro</h3>
-                                <div class="flex items-center justify-between mt-2">
-                                    <span class="recommendation-price">¥12,499</span>
-                                    <span class="text-xs text-gray-500">美国官网</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- 推薦2 -->
-                        <div class="recommendation-card">
-                            <div class="recommendation-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                                <i class="fas fa-shoe-prints text-white text-4xl"></i>
-                            </div>
-                            <div class="recommendation-content">
-                                <h3 class="recommendation-title">Nike Air Jordan 1 Retro</h3>
-                                <div class="flex items-center justify-between mt-2">
-                                    <span class="recommendation-price">¥1,599</span>
-                                    <span class="text-xs text-gray-500">日本限定</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 底部留白區域 -->
-                <div class="pb-8"></div>
-            </div>
-            
-            <!-- 搜尋頁 -->
-            <div id="search-page" class="page-container">
-                <!-- 搜尋框區域 -->
-                <div class="search-header-sticky" style="padding-top: 10px;">
-                    <div class="flex items-center">
-                        <button class="back-button back-btn mr-2">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        
-                        <div class="flex-1">
-                            <div class="search-box-main">
-                                <i class="fas fa-search"></i>
-                                <input type="text" placeholder="搜索商品、品牌或订单" id="search-input">
-                                <button class="search-cancel-btn" id="search-cancel">取消</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 搜尋歷史 -->
-                <div class="promotion-card" style="margin: 16px;">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-bold text-gray-800">搜索历史</h3>
-                        <button class="text-xs text-gray-500 hover:text-gray-700 transition-colors" id="clear-history">清空</button>
-                    </div>
-                    
-                    <div>
-                        <!-- 歷史記錄1 -->
-                        <div class="history-item">
-                            <div class="history-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="history-text">日本面膜</div>
-                            <i class="fas fa-times history-delete"></i>
-                        </div>
-                        
-                        <!-- 歷史記錄2 -->
-                        <div class="history-item">
-                            <div class="history-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="history-text">美国保健品</div>
-                            <i class="fas fa-times history-delete"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 熱門搜尋 -->
-                <div class="search-tags">
-                    <span class="search-tag">iPhone 15 Pro</span>
-                    <span class="search-tag">Nike Dunk</span>
-                    <span class="search-tag">兰蔻菁纯</span>
-                    <span class="search-tag">索尼耳机</span>
-                    <span class="search-tag">乐高积木</span>
-                    <span class="search-tag">戴森吹风机</span>
-                </div>
-                
-                <!-- 搜尋結果區域（初始隱藏） -->
-                <div id="search-results" class="hidden">
-                    <div class="search-results">
-                        <h3 class="text-base font-bold text-gray-800 mb-4">搜索结果</h3>
-                        
-                        <!-- 結果1 -->
-                        <div class="result-item">
-                            <div class="result-image">
-                                <i class="fas fa-headphones"></i>
-                            </div>
-                            <div class="result-content">
-                                <div class="result-title">索尼 WH-1000XM5 降噪耳机</div>
-                                <div class="result-description">日本官网 · 黑色款</div>
-                                <div class="result-footer">
-                                    <div class="result-price">¥2,399</div>
-                                    <div class="result-delivery">7天到货</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 底部留白區域 -->
-                <div class="pb-8"></div>
-            </div>
-            
-            <!-- 轉運頁 -->
-            <div id="ship-page" class="page-container">
-                <!-- 頂部導航欄 -->
-                <div class="page-header-unified">
-                    <div class="top-search-bar">
-                        <button class="back-button back-btn">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        
-                        <div class="search-box-unified">
-                            <i class="fas fa-search"></i>
-                            <input type="text" placeholder="快遞單號/訂單號/商品單號">
-                        </div>
-                        
-                        <button class="sort-button" id="time-sort-ship">
-                            <i class="fas fa-sort-amount-down"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- 轉運訂單篩選標籤 -->
-                    <div class="package-filter-tabs">
-                        <div class="package-tab active">全部</div>
-                        <div class="package-tab">待补款</div>
-                        <div class="package-tab">待支付</div>
-                        <div class="package-tab">转运中</div>
-                        <div class="package-tab">待清关</div>
-                        <div class="package-tab">已转超</div>
-                        <div class="package-tab">已签收</div>
-                    </div>
-                </div>
-                
-                <!-- 轉運訂單列表區域 -->
-                <div class="order-list-container">
-                    <div class="empty-order-state">
-                        <div class="empty-order-icon">
-                            <i class="fas fa-box"></i>
-                        </div>
-                        <h3 class="text-base font-medium text-gray-800 mb-2">暂无转运订单</h3>
-                        <p class="text-sm text-gray-500 mb-4">去下单转运吧</p>
-                        <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all">
-                            开始转运
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 底部留白區域 -->
-                <div class="pb-8"></div>
-            </div>
-            
-            <!-- 個人中心頁 -->
-            <div id="profile-page" class="page-container">
-                <!-- 用戶信息區域 -->
-                <div class="profile-header-dark">
-                    <div class="user-info-container">
-                        <div class="user-info-left">
-                            <div class="user-avatar-square">
-                                <i class="fas fa-user"></i>
-                            </div>
-                            <div class="user-details-extended">
-                                <div class="user-name-large">张先生</div>
-                                <div class="user-id-code">用户ID: PD276566166vo</div>
-                                <div class="invite-code">邀请码: INV2023</div>
-                            </div>
-                        </div>
-                        
-                        <button class="settings-button" id="settings-btn">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- VIP會員卡片 - 進一步優化 -->
-                <div class="vip-card-premium">
-                    <div class="vip-card-content">
-                        <div class="vip-card-header">
-                            <div class="vip-badge-premium">
-                                <i class="fas fa-crown crown-icon-premium"></i> 尊享会员
-                            </div>
-                            <a href="#" class="vip-view-detail">查看详情</a>
-                        </div>
-                        
-                        <div class="vip-balance-grid-premium">
-                            <div class="vip-balance-item-premium">
-                                <span class="vip-balance-label-premium">到付余额</span>
-                                <span class="vip-balance-value-premium">0.00</span>
-                            </div>
-                            
-                            <div class="vip-balance-item-premium">
-                                <span class="vip-balance-label-premium">拍币余额</span>
-                                <span class="vip-balance-value-premium">0.00</span>
-                            </div>
-                            
-                            <div class="vip-balance-item-premium">
-                                <span class="vip-balance-label-premium">优惠券</span>
-                                <span class="vip-balance-value-premium">0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="vip-expiry-premium">
-                            <div class="vip-expiry-info">
-                                <span class="vip-expiry-label">有效日期</span>
-                                <div class="vip-expiry-date">2024-12-31</div>
-                            </div>
-                            <button class="vip-renew-btn-premium">续费</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- 弧形容器 -->
-                <div class="arc-container">
-                    <!-- 快速功能卡片 (4x1) -->
-                    <div class="quick-stats-container">
-                        <div class="quick-stats-grid">
-                            <div class="quick-stat-item">
-                                <div class="quick-stat-icon">
-                                    <i class="fas fa-box"></i>
-                                </div>
-                                <span class="quick-stat-text">未入库</span>
-                                <span class="quick-stat-count">0</span>
-                            </div>
-                            
-                            <div class="quick-stat-item">
-                                <div class="quick-stat-icon">
-                                    <i class="fas fa-warehouse"></i>
-                                </div>
-                                <span class="quick-stat-text">已入库</span>
-                                <span class="quick-stat-count">3</span>
-                            </div>
-                            
-                            <div class="quick-stat-item">
-                                <div class="quick-stat-icon">
-                                    <i class="fas fa-shopping-cart"></i>
-                                </div>
-                                <span class="quick-stat-text">未采购</span>
-                                <span class="quick-stat-count">2</span>
-                            </div>
-                            
-                            <div class="quick-stat-item">
-                                <div class="quick-stat-icon">
-                                    <i class="fas fa-check-circle"></i>
-                                </div>
-                                <span class="quick-stat-text">已采购</span>
-                                <span class="quick-stat-count">5</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 推广合作卡片 -->
-                    <div class="promotion-card">
-                        <div class="promotion-header">
-                            <h3 class="promotion-title">推广合作</h3>
-                            <span class="promotion-more">查看更多</span>
-                        </div>
-                        <p class="promotion-content">
-                            分享邀请码，好友下单您可获得佣金，最高可达订单金额的10%！
-                        </p>
-                    </div>
-                    
-                    <!-- 功能菜單網格 (4x2) -->
-                    <div class="function-menu-grid">
-                        <!-- 代购试算 -->
-                        <div class="function-menu-item" data-page="calculator">
-                            <div class="function-menu-icon color-1">
-                                <i class="fas fa-calculator"></i>
-                            </div>
-                            <span class="function-menu-text">代购试算</span>
-                        </div>
-                        
-                        <!-- 抖钻代储 -->
-                        <div class="function-menu-item" data-page="douyin-recharge">
-                            <div class="function-menu-icon color-2">
-                                <i class="fas fa-gem"></i>
-                            </div>
-                            <span class="function-menu-text">抖钻代储</span>
-                        </div>
-                        
-                        <!-- 站内信 -->
-                        <div class="function-menu-item" data-page="messages">
-                            <div class="function-menu-icon color-3">
-                                <i class="fas fa-envelope"></i>
-                            </div>
-                            <span class="function-menu-text">站内信</span>
-                        </div>
-                        
-                        <!-- 我的仓库 -->
-                        <div class="function-menu-item" data-page="warehouse">
-                            <div class="function-menu-icon color-4">
-                                <i class="fas fa-warehouse"></i>
-                            </div>
-                            <span class="function-menu-text">我的仓库</span>
-                        </div>
-                        
-                        <!-- 预报包裹 -->
-                        <div class="function-menu-item" data-page="forecast">
-                            <div class="function-menu-icon color-5">
-                                <i class="fas fa-box-open"></i>
-                            </div>
-                            <span class="function-menu-text">预报包裹</span>
-                        </div>
-                        
-                        <!-- 我的包裹 -->
-                        <div class="function-menu-item" data-page="packages">
-                            <div class="function-menu-icon color-6">
-                                <i class="fas fa-boxes"></i>
-                            </div>
-                            <span class="function-menu-text">我的包裹</span>
-                        </div>
-                        
-                        <!-- 帮助中心 -->
-                        <div class="function-menu-item" data-page="help">
-                            <div class="function-menu-icon color-7">
-                                <i class="fas fa-question-circle"></i>
-                            </div>
-                            <span class="function-menu-text">帮助中心</span>
-                        </div>
-                        
-                        <!-- 在线客服 -->
-                        <div class="function-menu-item" data-page="customer-service">
-                            <div class="function-menu-icon color-8">
-                                <i class="fas fa-headset"></i>
-                            </div>
-                            <span class="function-menu-text">在线客服</span>
-                        </div>
-                    </div>
-                    
-                    <!-- 底部留白區域 -->
-                    <div class="pb-8"></div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="hideLoginModal()" style="background: transparent; border: none; color: #666; font-size: 14px; cursor: pointer;">暫時跳過</button>
                 </div>
             </div>
         </div>
-        
-        <!-- FAB懸浮按鈕 + 二級菜單 - 現在位於手機框架內貼齊右側 -->
-        <div class="fab-container">
-            <div class="fab-menu" id="fab-menu">
-                <!-- 快速代購 -->
-                <div class="fab-item relative quick-buy">
-                    <i class="fas fa-bolt"></i>
-                    <span class="fab-item-label">快速代购</span>
-                </div>
-                
-                <!-- 包裹預報 -->
-                <div class="fab-item relative package-forecast">
-                    <i class="fas fa-box-open"></i>
-                    <span class="fab-item-label">包裹预报</span>
-                </div>
-                
-                <!-- 聯繫客服 -->
-                <div class="fab-item relative contact-service">
-                    <i class="fas fa-headset"></i>
-                    <span class="fab-item-label">联系客服</span>
-                </div>
-            </div>
-            
-            <div class="fab-main" id="fab-main">
-                <i class="fas fa-plus" id="fab-icon"></i>
-            </div>
-        </div>
-        
-        <!-- 設置模態框 -->
-        <div class="settings-modal" id="settings-modal">
-            <div class="settings-content">
-                <div class="settings-header">
-                    <h2 class="settings-title">设置</h2>
-                    <button class="settings-close" id="settings-close">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <div class="settings-list">
-                    <div class="settings-item" id="edit-profile">
-                        <i class="fas fa-user-edit"></i>
-                        <span class="settings-item-text">修改用户资料</span>
-                    </div>
-                    
-                    <div class="settings-item" id="edit-phone">
-                        <i class="fas fa-phone"></i>
-                        <span class="settings-item-text">用户电话</span>
-                    </div>
-                    
-                    <div class="settings-item" id="edit-email">
-                        <i class="fas fa-envelope"></i>
-                        <span class="settings-item-text">用户信箱</span>
-                    </div>
-                    
-                    <div class="settings-item" id="account-auth">
-                        <i class="fas fa-shield-alt"></i>
-                        <span class="settings-item-text">账号授权</span>
-                    </div>
-                    
-                    <div class="settings-item" id="change-password">
-                        <i class="fas fa-key"></i>
-                        <span class="settings-item-text">修改密码</span>
-                    </div>
-                    
-                    <div class="settings-item" id="recover-password">
-                        <i class="fas fa-unlock-alt"></i>
-                        <span class="settings-item-text">找回密码</span>
-                    </div>
-                    
-                    <div class="settings-item" id="change-language">
-                        <i class="fas fa-globe"></i>
-                        <span class="settings-item-text">切换语言</span>
-                    </div>
-                    
-                    <div class="settings-item" id="switch-account">
-                        <i class="fas fa-exchange-alt"></i>
-                        <span class="settings-item-text">注销账户</span>
-                    </div>
-                </div>
-                
-                <div class="settings-footer">
-                    <div class="settings-footer-text">
-                        使用ONEPAY拍吧即表示您同意我们的服务条款
-                    </div>
-                    
-                    <div class="settings-footer-links">
-                        <a href="#" class="settings-footer-link">服务协议</a>
-                        <a href="#" class="settings-footer-link">隐私协议</a>
-                    </div>
-                    
-                    <button class="logout-btn mt-4" id="logout-btn">退出登录</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- 底部導航欄 - 高度55px，圖標完整顯示 -->
-        <div class="bottom-nav">
-            <!-- 首頁 -->
-            <button class="nav-button" id="nav-home">
-                <div class="nav-icon-wrapper active" id="nav-home-icon">
-                    <i class="fas fa-home nav-icon active" id="nav-home-symbol"></i>
-                </div>
-                <span class="nav-text active" id="nav-home-text">首页</span>
-            </button>
-            
-            <!-- 代購 -->
-            <button class="nav-button" id="nav-buy">
-                <div class="nav-icon-wrapper" id="nav-buy-icon">
-                    <i class="fas fa-shopping-cart nav-icon" id="nav-buy-symbol"></i>
-                </div>
-                <span class="nav-text inactive" id="nav-buy-text">代购</span>
-            </button>
-            
-            <!-- 搜索按鈕空位 -->
-            <div class="search-placeholder"></div>
-            
-            <!-- 轉運 -->
-            <button class="nav-button" id="nav-ship">
-                <div class="nav-icon-wrapper" id="nav-ship-icon">
-                    <i class="fas fa-shipping-fast nav-icon" id="nav-ship-symbol"></i>
-                </div>
-                <span class="nav-text inactive" id="nav-ship-text">转运</span>
-            </button>
-            
-            <!-- 我的 -->
-            <button class="nav-button" id="nav-profile">
-                <div class="nav-icon-wrapper" id="nav-profile-icon">
-                    <i class="fas fa-user nav-icon" id="nav-profile-symbol"></i>
-                </div>
-                <span class="nav-text inactive" id="nav-profile-text">我的</span>
-            </button>
-            
-            <!-- 搜索按鈕（居中凸起） -->
-            <div class="search-center-container">
-                <div class="search-center-button" id="nav-search">
-                    <i class="fas fa-search"></i>
-                </div>
+
+        <!-- ========== 管理後台登入模態框 ========== -->
+        <div class="admin-modal" id="admin-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
+            <div class="admin-content" style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px;">
+                <h2 style="text-align: center; margin-bottom: 20px; font-weight: bold;">管理後台登入</h2>
+                <input type="password" id="admin-password" placeholder="管理密碼" style="width: 100%; padding: 15px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 10px; font-size: 16px;">
+                <button id="admin-login-btn" style="width: 100%; padding: 15px; background: #000; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 16px; cursor: pointer;">進入管理後台</button>
+                <button id="admin-cancel" style="width: 100%; padding: 15px; background: #fff; color: #000; border: 1px solid #000; border-radius: 10px; font-weight: bold; margin-top: 10px; font-size: 16px; cursor: pointer;">取消</button>
             </div>
         </div>
     </div>
 
     <script>
         // ==============================
-        // Firebase 配置 - 確保這是正確的
+        // Firebase 配置
         // ==============================
         const firebaseConfig = {
-            apiKey: "AIzaSyAUgbncfETG8MtScJyEXl0RyCqyY8pCbQc",
-            authDomain: "onepay-96552.firebaseapp.com",
-            projectId: "onepay-96552",
-            storageBucket: "onepay-96552.firebasestorage.app",
-            messagingSenderId: "554466443215",
-            appId: "1:554466443215:web:8a31efb7bee8c7bdd6dcba"
+            apiKey: "AIzaSyBdpWnNt2W8aam-WLMwN7J9KuJgya74",
+            authDomain: "onepay-daigou.firebaseapp.com",
+            projectId: "onepay-daigou",
+            storageBucket: "onepay-daigou.firebasestorage.app",
+            messagingSenderId: "267936185399",
+            appId: "1:267936185399:web:90cf6e3e976c6cb213b2"
         };
 
         // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-
-        // 初始化Firebase服務
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const storage = firebase.storage();
+        let auth, db, storage;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            storage = firebase.storage();
+            console.log('✅ Firebase 初始化成功');
+        } catch (error) {
+            console.error('❌ Firebase 初始化失敗:', error);
+        }
 
         // 全局變量
         let currentUser = null;
@@ -2400,6 +1670,22 @@
         // ==============================
         // 工具函數
         // ==============================
+        function showLoginModal() {
+            document.getElementById('auth-modal').style.display = 'flex';
+        }
+        
+        function hideLoginModal() {
+            document.getElementById('auth-modal').style.display = 'none';
+        }
+        
+        function showAdminModal() {
+            document.getElementById('admin-modal').style.display = 'flex';
+        }
+        
+        function hideAdminModal() {
+            document.getElementById('admin-modal').style.display = 'none';
+        }
+
         function generateInviteCode() {
             const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
             let code = '';
@@ -2409,83 +1695,88 @@
             return code;
         }
 
-        function formatDate(timestamp) {
-            if (!timestamp) return '未知時間';
-            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-            return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-        }
-
         // ==============================
-        // 用戶認證功能
+        // 頁面加載完成後初始化
         // ==============================
-        
-        // 等待DOM加載完成
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('📱 頁面加載完成，開始初始化...');
             
-            // 檢查用戶登入狀態
-            auth.onAuthStateChanged(user => {
-                const authModal = document.getElementById('auth-modal');
+            // 檢查Firebase狀態
+            if (!auth) {
+                console.error('Firebase未初始化，顯示登入按鈕');
+                document.getElementById('temp-login-btn').style.display = 'block';
+                return;
+            }
+            
+            // 1. 檢查用戶登入狀態
+            auth.onAuthStateChanged(function(user) {
+                console.log('👤 用戶狀態變化:', user ? '已登入' : '未登入');
                 
                 if (user) {
+                    // 用戶已登入
                     currentUser = user;
-                    if (authModal) authModal.style.display = 'none';
-                    console.log('用戶已登入:', user.email);
+                    hideLoginModal();
+                    document.getElementById('temp-login-btn').style.display = 'none';
                     
                     // 更新用戶界面
                     updateUserProfile(user);
                     
+                    // 創建或更新用戶文檔
+                    createOrUpdateUserDocument(user);
+                    
                 } else {
+                    // 用戶未登入，顯示登入框
                     currentUser = null;
-                    if (authModal) authModal.style.display = 'flex';
-                    console.log('用戶未登入');
+                    showLoginModal();
+                    document.getElementById('temp-login-btn').style.display = 'block';
                 }
             });
-
-            // 登入功能
-            const loginButton = document.getElementById('login-button');
-            if (loginButton) {
-                loginButton.addEventListener('click', async function() {
-                    const email = document.getElementById('auth-email').value;
-                    const password = document.getElementById('auth-password').value;
-                    
-                    if (!email || !password) {
-                        alert('請輸入郵箱和密碼');
-                        return;
-                    }
-                    
-                    try {
-                        await auth.signInWithEmailAndPassword(email, password);
-                        console.log('登入成功');
-                    } catch (error) {
+            
+            // 2. 綁定登入按鈕事件
+            document.getElementById('login-button').addEventListener('click', function() {
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                
+                if (!email || !password) {
+                    alert('請輸入郵箱和密碼');
+                    return;
+                }
+                
+                console.log('正在登入:', email);
+                auth.signInWithEmailAndPassword(email, password)
+                    .then(function(userCredential) {
+                        console.log('✅ 登入成功');
+                        hideLoginModal();
+                    })
+                    .catch(function(error) {
+                        console.error('❌ 登入失敗:', error);
                         alert('登入失敗: ' + error.message);
-                        console.error('登入錯誤:', error);
-                    }
-                });
-            }
-
-            // 註冊功能
-            const signupButton = document.getElementById('signup-button');
-            if (signupButton) {
-                signupButton.addEventListener('click', async function() {
-                    const email = document.getElementById('auth-email').value;
-                    const password = document.getElementById('auth-password').value;
-                    
-                    if (!email || !password) {
-                        alert('請輸入郵箱和密碼');
-                        return;
-                    }
-                    
-                    if (password.length < 6) {
-                        alert('密碼至少需要6位字符');
-                        return;
-                    }
-                    
-                    try {
-                        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                    });
+            });
+            
+            // 3. 綁定註冊按鈕事件
+            document.getElementById('signup-button').addEventListener('click', function() {
+                const email = document.getElementById('auth-email').value;
+                const password = document.getElementById('auth-password').value;
+                
+                if (!email || !password) {
+                    alert('請輸入郵箱和密碼');
+                    return;
+                }
+                
+                if (password.length < 6) {
+                    alert('密碼至少需要6位字符');
+                    return;
+                }
+                
+                console.log('正在註冊:', email);
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(function(userCredential) {
                         const user = userCredential.user;
+                        console.log('✅ 註冊成功:', user.uid);
                         
                         // 創建用戶文檔
-                        await db.collection('users').doc(user.uid).set({
+                        return db.collection('users').doc(user.uid).set({
                             email: user.email,
                             name: user.email.split('@')[0],
                             phone: '',
@@ -2497,156 +1788,152 @@
                             createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        
-                        alert('註冊成功！歡迎使用ONEPAY拍吧！');
-                        console.log('用戶註冊成功:', user.email);
-                        
-                    } catch (error) {
+                    })
+                    .then(function() {
+                        alert('🎉 註冊成功！歡迎使用ONEPAY拍吧！');
+                        hideLoginModal();
+                    })
+                    .catch(function(error) {
+                        console.error('❌ 註冊失敗:', error);
                         alert('註冊失敗: ' + error.message);
-                        console.error('註冊錯誤:', error);
-                    }
-                });
-            }
-
-            // 忘記密碼
-            const forgotPassword = document.getElementById('forgot-password');
-            if (forgotPassword) {
-                forgotPassword.addEventListener('click', async function(e) {
-                    e.preventDefault();
-                    const email = document.getElementById('auth-email').value;
-                    
-                    if (!email) {
-                        alert('請輸入您的電子郵件地址');
-                        return;
-                    }
-                    
-                    try {
-                        await auth.sendPasswordResetEmail(email);
-                        alert('密碼重置郵件已發送至 ' + email);
-                    } catch (error) {
-                        alert('發送失敗: ' + error.message);
-                    }
-                });
-            }
-
-            // 管理後台登入
-            const adminLoginBtn = document.getElementById('admin-login-btn');
-            if (adminLoginBtn) {
-                adminLoginBtn.addEventListener('click', function() {
-                    const password = document.getElementById('admin-password').value;
-                    
-                    if (password === ADMIN_PASSWORD) {
-                        isAdminMode = true;
-                        document.getElementById('admin-modal').style.display = 'none';
-                        showAdminDashboard();
-                    } else {
-                        alert('管理密碼錯誤！');
-                    }
-                });
-            }
-
-            // 登出功能
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async function() {
-                    if (confirm('確定要退出登錄嗎？')) {
-                        try {
-                            await auth.signOut();
+                    });
+            });
+            
+            // 4. 忘記密碼功能
+            document.getElementById('forgot-password').addEventListener('click', function(e) {
+                e.preventDefault();
+                const email = document.getElementById('auth-email').value;
+                
+                if (!email) {
+                    alert('請輸入您的電子郵件地址');
+                    return;
+                }
+                
+                auth.sendPasswordResetEmail(email)
+                    .then(function() {
+                        alert('✅ 密碼重置郵件已發送至 ' + email);
+                    })
+                    .catch(function(error) {
+                        alert('❌ 發送失敗: ' + error.message);
+                    });
+            });
+            
+            // 5. 管理後台功能
+            document.getElementById('admin-login-btn').addEventListener('click', function() {
+                const password = document.getElementById('admin-password').value;
+                
+                if (password === ADMIN_PASSWORD) {
+                    isAdminMode = true;
+                    hideAdminModal();
+                    showAdminDashboard();
+                    alert('✅ 管理後台登入成功！');
+                } else {
+                    alert('❌ 管理密碼錯誤！');
+                }
+            });
+            
+            document.getElementById('admin-cancel').addEventListener('click', hideAdminModal);
+            
+            // 6. 登出功能
+            document.getElementById('logout-btn')?.addEventListener('click', function() {
+                if (confirm('確定要退出登錄嗎？')) {
+                    auth.signOut()
+                        .then(function() {
                             alert('已退出登錄');
                             isAdminMode = false;
-                        } catch (error) {
+                        })
+                        .catch(function(error) {
                             console.error('退出登錄失敗:', error);
-                        }
-                    }
+                        });
+                }
+            });
+            
+            // 7. 在設置中添加管理後台入口
+            const settingsList = document.querySelector('.settings-list');
+            if (settingsList) {
+                const adminItem = document.createElement('div');
+                adminItem.className = 'settings-item';
+                adminItem.id = 'admin-login-item';
+                adminItem.innerHTML = `
+                    <i class="fas fa-user-shield"></i>
+                    <span class="settings-item-text">管理後台</span>
+                `;
+                adminItem.addEventListener('click', function() {
+                    document.getElementById('settings-modal').classList.remove('active');
+                    showAdminModal();
                 });
-            }
-
-            // ==============================
-            // 頁面管理代碼（簡化版）
-            // ==============================
-            
-            const pages = {
-                'home': document.getElementById('home-page'),
-                'buy': document.getElementById('buy-page'),
-                'search': document.getElementById('search-page'),
-                'ship': document.getElementById('ship-page'),
-                'profile': document.getElementById('profile-page')
-            };
-            
-            // 簡單的頁面切換
-            document.getElementById('nav-home')?.addEventListener('click', () => showPage('home'));
-            document.getElementById('nav-buy')?.addEventListener('click', () => showPage('buy'));
-            document.getElementById('nav-ship')?.addEventListener('click', () => showPage('ship'));
-            document.getElementById('nav-profile')?.addEventListener('click', () => showPage('profile'));
-            document.getElementById('nav-search')?.addEventListener('click', () => showPage('search'));
-            
-            function showPage(pageId) {
-                Object.values(pages).forEach(page => {
-                    if (page) page.classList.remove('active');
-                });
-                if (pages[pageId]) pages[pageId].classList.add('active');
+                settingsList.appendChild(adminItem);
             }
             
-            // 初始化顯示首頁
-            showPage('home');
-            
-            // 廣告輪播
-            let currentSlide = 0;
-            const slides = document.querySelectorAll('.ad-slide');
-            if (slides.length > 0) {
-                setInterval(() => {
-                    slides.forEach(slide => slide.classList.remove('active'));
-                    currentSlide = (currentSlide + 1) % slides.length;
-                    slides[currentSlide].classList.add('active');
-                }, 4000);
-            }
-            
-            // FAB按鈕
-            const fabMain = document.getElementById('fab-main');
-            if (fabMain) {
-                fabMain.addEventListener('click', function() {
-                    const fabMenu = document.getElementById('fab-menu');
-                    if (fabMenu) {
-                        fabMenu.classList.toggle('active');
-                    }
-                });
-            }
-            
-            // 快速代購功能
+            // 8. 快速代購功能
             document.querySelector('.quick-buy')?.addEventListener('click', function() {
                 if (!currentUser) {
                     alert('請先登入！');
-                    // 強制顯示登入模態框
-document.getElementById('auth-modal').style.display = 'flex';
-console.log('Firebase狀態:', firebase.apps.length > 0 ? '已加載' : '未加載');
+                    showLoginModal();
                     return;
                 }
+                
                 const productName = prompt('請輸入商品名稱：');
                 if (!productName) return;
+                
                 const productPrice = parseFloat(prompt('請輸入商品價格（人民幣）：'));
-                if (isNaN(productPrice)) return;
+                if (isNaN(productPrice)) {
+                    alert('請輸入有效的價格');
+                    return;
+                }
+                
                 createBuyOrder(productName, productPrice);
             });
             
-            // 包裹預報功能
+            // 9. 包裹預報功能
             document.querySelector('.package-forecast')?.addEventListener('click', function() {
                 if (!currentUser) {
                     alert('請先登入！');
-                    document.getElementById('auth-modal').style.display = 'flex';
+                    showLoginModal();
                     return;
                 }
+                
                 const trackingNumber = prompt('請輸入快遞單號：');
                 if (!trackingNumber) return;
+                
                 const carrier = prompt('請輸入快遞公司：');
                 if (!carrier) return;
+                
                 createPackage(trackingNumber, carrier);
             });
             
-        }); // DOMContentLoaded結束
-
+            console.log('✅ 所有事件綁定完成');
+        });
+        
         // ==============================
         // Firebase數據操作函數
         // ==============================
+        async function createOrUpdateUserDocument(user) {
+            try {
+                const userDoc = await db.collection('users').doc(user.uid).get();
+                
+                if (!userDoc.exists) {
+                    // 創建新用戶文檔
+                    await db.collection('users').doc(user.uid).set({
+                        email: user.email,
+                        name: user.email.split('@')[0],
+                        phone: '',
+                        vipLevel: 0,
+                        balance: 0,
+                        coinBalance: 0,
+                        couponCount: 0,
+                        inviteCode: generateInviteCode(),
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    console.log('✅ 創建用戶文檔成功');
+                } else {
+                    console.log('✅ 用戶文檔已存在');
+                }
+            } catch (error) {
+                console.error('❌ 用戶文檔操作失敗:', error);
+            }
+        }
         
         async function updateUserProfile(user) {
             try {
@@ -2656,31 +1943,40 @@ console.log('Firebase狀態:', firebase.apps.length > 0 ? '已加載' : '未加�
                     
                     // 更新個人中心顯示
                     const userNameElement = document.querySelector('.user-name-large');
-                    if (userNameElement && userData) {
-                        userNameElement.textContent = userData.name;
+                    if (userNameElement) {
+                        userNameElement.textContent = userData.name || user.email.split('@')[0];
+                    }
+                    
+                    // 更新用戶ID顯示
+                    const userIdElement = document.querySelector('.user-id-code');
+                    if (userIdElement) {
+                        userIdElement.textContent = '用戶ID: ' + user.uid.substring(0, 12);
+                    }
+                    
+                    // 更新邀請碼
+                    const inviteElement = document.querySelector('.invite-code');
+                    if (inviteElement) {
+                        inviteElement.textContent = '邀請碼: ' + (userData.inviteCode || '等待生成');
                     }
                     
                     // 更新VIP卡片
                     const balanceElements = document.querySelectorAll('.vip-balance-value-premium');
                     if (balanceElements.length >= 3) {
-                        balanceElements[0].textContent = userData.balance.toFixed(2);
-                        balanceElements[1].textContent = userData.coinBalance.toFixed(2);
-                        balanceElements[2].textContent = userData.couponCount;
+                        balanceElements[0].textContent = (userData.balance || 0).toFixed(2);
+                        balanceElements[1].textContent = (userData.coinBalance || 0).toFixed(2);
+                        balanceElements[2].textContent = (userData.couponCount || 0);
                     }
+                    
+                    console.log('✅ 用戶界面更新完成');
                 }
             } catch (error) {
-                console.error('更新用戶資料失敗:', error);
+                console.error('❌ 更新用戶界面失敗:', error);
             }
         }
-
+        
         async function createBuyOrder(productName, productPrice, quantity = 1) {
-            if (!currentUser) {
-                alert('請先登入！');
-                return;
-            }
-            
             try {
-                const serviceFee = Math.max(30, productPrice * 0.1); // 10%服務費，最低30
+                const serviceFee = Math.max(30, productPrice * 0.1);
                 const shippingFee = 50;
                 const total = productPrice * quantity + serviceFee + shippingFee;
                 
@@ -2698,20 +1994,18 @@ console.log('Firebase狀態:', firebase.apps.length > 0 ? '已加載' : '未加�
                 };
                 
                 await db.collection('orders').add(orderData);
-                alert('訂單創建成功！');
+                alert('✅ 訂單創建成功！');
+                
+                // 刷新訂單數量顯示
+                updateOrderCounts();
                 
             } catch (error) {
+                console.error('❌ 創建訂單失敗:', error);
                 alert('創建訂單失敗: ' + error.message);
-                console.error('訂單創建錯誤:', error);
             }
         }
-
+        
         async function createPackage(trackingNumber, carrier, content = '') {
-            if (!currentUser) {
-                alert('請先登入！');
-                return;
-            }
-            
             try {
                 const packageData = {
                     userId: currentUser.uid,
@@ -2725,31 +2019,157 @@ console.log('Firebase狀態:', firebase.apps.length > 0 ? '已加載' : '未加�
                 };
                 
                 await db.collection('packages').add(packageData);
-                alert('包裹預報成功！');
+                alert('✅ 包裹預報成功！');
                 
             } catch (error) {
+                console.error('❌ 包裹預報失敗:', error);
                 alert('包裹預報失敗: ' + error.message);
-                console.error('包裹預報錯誤:', error);
             }
         }
-
+        
+        async function updateOrderCounts() {
+            if (!currentUser) return;
+            
+            try {
+                const ordersSnapshot = await db.collection('orders')
+                    .where('userId', '==', currentUser.uid)
+                    .get();
+                
+                let buyCount = 0;
+                let shipCount = 0;
+                
+                ordersSnapshot.forEach(doc => {
+                    const order = doc.data();
+                    if (order.type === 'buy') buyCount++;
+                    if (order.type === 'ship') shipCount++;
+                });
+                
+                // 更新顯示
+                const buyCountEl = document.querySelector('.buy-order-count');
+                const shipCountEl = document.querySelector('.ship-order-count');
+                
+                if (buyCountEl) buyCountEl.textContent = buyCount + ' 單';
+                if (shipCountEl) shipCountEl.textContent = shipCount + ' 單';
+                
+            } catch (error) {
+                console.error('更新訂單數量失敗:', error);
+            }
+        }
+        
         // 管理後台功能
         function showAdminDashboard() {
             const adminHTML = `
-                <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:2000;padding:20px;">
-                    <h2>ONEPAY拍吧管理後台</h2>
-                    <p>管理功能已啟用</p>
-                    <button onclick="this.parentElement.remove();isAdminMode=false;">返回</button>
+                <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:3000;overflow-y:auto;padding:20px;">
+                    <div style="background:#1a1a1a;color:white;padding:20px;border-radius:10px;margin-bottom:20px;">
+                        <h2 style="margin:0;">ONEPAY拍吧 - 管理後台</h2>
+                        <p style="margin:5px 0 0 0;opacity:0.8;">系統管理面板</p>
+                    </div>
+                    
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:15px;margin-bottom:30px;">
+                        <div style="background:#f5f5f5;padding:20px;border-radius:10px;text-align:center;">
+                            <div style="font-size:24px;font-weight:bold;" id="admin-user-count">0</div>
+                            <div style="color:#666;">用戶數</div>
+                        </div>
+                        <div style="background:#f5f5f5;padding:20px;border-radius:10px;text-align:center;">
+                            <div style="font-size:24px;font-weight:bold;" id="admin-order-count">0</div>
+                            <div style="color:#666;">訂單數</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom:20px;">
+                        <h3>測試功能</h3>
+                        <button onclick="testCreateUser()" style="background:#007aff;color:white;border:none;padding:10px 20px;border-radius:5px;margin-right:10px;cursor:pointer;">創建測試用戶</button>
+                        <button onclick="testCreateOrder()" style="background:#34c759;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;">創建測試訂單</button>
+                    </div>
+                    
+                    <button onclick="this.parentElement.remove();isAdminMode=false;" 
+                            style="background:#ff3b30;color:white;border:none;padding:10px 20px;border-radius:5px;cursor:pointer;width:100%;">
+                        退出管理後台
+                    </button>
                 </div>
             `;
+            
             const div = document.createElement('div');
             div.innerHTML = adminHTML;
             document.body.appendChild(div);
+            
+            // 加載管理數據
+            loadAdminData();
         }
-
-        // 初始化完成
-        console.log('ONEPAY拍吧系統已初始化完成');
         
+        async function loadAdminData() {
+            try {
+                const usersSnapshot = await db.collection('users').get();
+                const ordersSnapshot = await db.collection('orders').get();
+                
+                document.getElementById('admin-user-count').textContent = usersSnapshot.size;
+                document.getElementById('admin-order-count').textContent = ordersSnapshot.size;
+                
+            } catch (error) {
+                console.error('加載管理數據失敗:', error);
+            }
+        }
+        
+        // 測試功能
+        async function testCreateUser() {
+            const email = 'test' + Date.now() + '@example.com';
+            const password = 'Test123456';
+            
+            try {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                
+                await db.collection('users').doc(user.uid).set({
+                    email: email,
+                    name: '測試用戶',
+                    phone: '',
+                    vipLevel: 0,
+                    balance: 100,
+                    coinBalance: 50,
+                    couponCount: 3,
+                    inviteCode: 'TEST' + Date.now().toString().slice(-6),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                alert('✅ 測試用戶創建成功：' + email);
+                loadAdminData();
+                
+            } catch (error) {
+                alert('❌ 創建失敗: ' + error.message);
+            }
+        }
+        
+        async function testCreateOrder() {
+            if (!currentUser) {
+                alert('請先登入普通帳戶');
+                return;
+            }
+            
+            try {
+                const orderData = {
+                    userId: currentUser.uid,
+                    type: 'buy',
+                    status: 'pending_payment',
+                    productName: '測試商品',
+                    productPrice: 299,
+                    quantity: 1,
+                    serviceFee: 30,
+                    shippingFee: 50,
+                    total: 379,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('orders').add(orderData);
+                alert('✅ 測試訂單創建成功！');
+                loadAdminData();
+                
+            } catch (error) {
+                alert('❌ 創建失敗: ' + error.message);
+            }
+        }
+        
+        console.log('🚀 ONEPAY拍吧系統已加載');
     </script>
 </body>
 </html>
