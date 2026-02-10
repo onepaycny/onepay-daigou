@@ -1,19 +1,19 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<!-- Firebase SDK（必須在您自己的JS代碼之前） -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ONEPAY拍吧 - 跨境代購集運系統</title>
+    <title>ONEPAY拍吧 - 个人中心</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-functions-compat.js"></script>
-    
     <style>
-        /* 所有原有CSS樣式保持不變 */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         :root {
             --glass-bg: rgba(255, 255, 255, 0.9);
             --glass-border: rgba(255, 255, 255, 0.3);
@@ -56,94 +56,1286 @@
             background: var(--bg-light-gray);
         }
         
-        /* 登入/註冊模態框 */
-        .auth-modal {
+        /* 劉海模擬 */
+        .phone-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 24px;
+            background: #1a1a1a;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            z-index: 50;
+        }
+        
+        /* 螢幕內容區域 */
+        .screen-content {
+            position: relative;
+            height: 100%;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+            padding-bottom: 75px;
+        }
+        
+        .screen-content::-webkit-scrollbar {
             display: none;
+        }
+        
+        /* 頁面容器 */
+        .page-container {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .page-container.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* 玻璃擬態效果 */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+        
+        .bordered-card {
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        
+        .shadow-card {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            border-radius: 16px;
+            background: white;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 漸變效果 */
+        .bg-gradient-black {
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
+        }
+        
+        .text-gradient-black {
+            background: linear-gradient(135deg, #000000 0%, #666666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* 通知紅點 */
+        .notification-dot {
+            position: absolute;
+            top: 3px;
+            right: 3px;
+            width: 8px;
+            height: 8px;
+            background: #ff3b30;
+            border-radius: 50%;
+        }
+        
+        /* 廣告輪播 */
+        .ad-slider {
+            position: relative;
+            height: 130px;
+            overflow: hidden;
+            border-radius: 16px;
+            border: 1.5px solid var(--border-color);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        }
+        
+        .ad-slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        
+        .ad-slide.active {
+            opacity: 1;
+        }
+        
+        .slide-indicators {
+            position: absolute;
+            bottom: 4px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        .slide-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            cursor: pointer;
+        }
+        
+        .slide-indicator.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        
+        /* 訂單圖標 */
+        .order-icon-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .order-buy-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .order-ship-icon {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        /* 狀態標籤 */
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid currentColor;
+        }
+        
+        .status-processing {
+            background: rgba(0, 122, 255, 0.1);
+            color: #007aff;
+            border-color: rgba(0, 122, 255, 0.2);
+        }
+        
+        .status-pending {
+            background: rgba(255, 149, 0, 0.1);
+            color: #ff9500;
+            border-color: rgba(255, 149, 0, 0.2);
+        }
+        
+        .status-completed {
+            background: rgba(52, 199, 89, 0.1);
+            color: #34c759;
+            border-color: rgba(52, 199, 89, 0.2);
+        }
+        
+        /* 快速功能櫥窗導航列 */
+        .quick-nav-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+        }
+        
+        .quick-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 5px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1.5px solid var(--border-color);
+            background: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .quick-nav-item:hover {
+            background-color: #f9fafb;
+            border-color: #d1d5db;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quick-nav-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            font-size: 20px;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .nav-icon-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .nav-icon-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .nav-icon-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .nav-icon-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        
+        .quick-nav-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        /* 修正後的FAB懸浮按鈕 - 在手機框架內定位 */
+        .fab-container {
+            position: absolute;
+            bottom: 200px; /* 在底部導航上方，與導航高度一致 */
+            right: 5px;  /* 距離右側貼齊邊框 */
+            z-index: 100;
+        }
+        
+        .fab-main {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 25px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            transform-origin: center;
+        }
+        
+        .fab-main:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+        }
+        
+        .fab-menu {
+            position: absolute;
+            bottom: 65px;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 10px;
+            opacity: 0;
+            transform: translateY(20px) scale(0.8);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            pointer-events: none;
+        }
+        
+        .fab-menu.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+        
+        .fab-item {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-primary);
+            font-size: 18px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid #e5e7eb;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        
+        .fab-menu.active .fab-item:nth-child(1) {
+            animation: fabItemAppear 0.3s ease 0.1s forwards;
+        }
+        
+        .fab-menu.active .fab-item:nth-child(2) {
+            animation: fabItemAppear 0.3s ease 0.2s forwards;
+        }
+        
+        .fab-menu.active .fab-item:nth-child(3) {
+            animation: fabItemAppear 0.3s ease 0.3s forwards;
+        }
+        
+        @keyframes fabItemAppear {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fab-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .fab-item-label {
+            position: absolute;
+            right: 60px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .fab-item:hover .fab-item-label {
+            opacity: 1;
+        }
+        
+        /* 淡入動畫 */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        /* 修正後的底部導航 - 高度55px */
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 55px;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            border-radius: 24px 24px 0 0;
+            padding: 8px 10px 10px;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .search-center-container {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 45;
+        }
+        
+        .search-center-button {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-center-button:hover {
+            transform: scale(1.08);
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* 底部導航圖標容器 */
+        .nav-button {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            height: 100%;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            padding: 0;
+        }
+        
+        .nav-button:active {
+            transform: translateY(-2px);
+        }
+        
+        .nav-icon-wrapper {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 3px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-icon-wrapper.active {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e7eb 100%);
+            border: 1px solid #d1d5db;
+            transform: scale(1.1);
+        }
+        
+        .nav-icon {
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-icon.active {
+            background: linear-gradient(135deg, #000000 0%, #666666 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .nav-text {
+            font-size: 10px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-text.active {
+            color: #000000;
+            font-weight: 600;
+        }
+        
+        .nav-text.inactive {
+            color: #666666;
+        }
+        
+        /* 搜索按鈕空位占位符 */
+        .search-placeholder {
+            width: 70px;
+            height: 100%;
+        }
+        
+        /* 文本處理 */
+        .single-line {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        /* 模塊間距 */
+        .section-spacing {
+            margin-bottom: 12px;
+        }
+        
+        /* 導航圖標跳動動畫 */
+        @keyframes navBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .nav-icon-wrapper.jumping {
+            animation: navBounce 0.3s ease;
+        }
+        
+        /* 代購頁面和轉運頁面頂部導航欄 */
+        .page-header-unified {
+            background: white;
+            border-bottom: 1px solid var(--border-color);
+            padding: 20px 0px;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+        
+        .top-search-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-top: 10px;
+        }
+        
+        .back-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .back-button:hover {
+            background: #e9e9e9;
+        }
+        
+        .back-button i {
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        
+        .search-box-unified {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 10px 16px;
+            border: 1.5px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .search-box-unified:focus-within {
+            background: white;
+            border-color: #007aff;
+        }
+        
+        .search-box-unified i {
+            color: #666;
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .search-box-unified input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+        
+        .search-box-unified input::placeholder {
+            color: var(--text-light);
+        }
+        
+        .sort-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .sort-button:hover {
+            background: #e9e9e9;
+        }
+        
+        .sort-button i {
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        
+        .order-filter-tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            margin-top: 12px;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+        
+        .order-filter-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .filter-tab {
+            padding: 4px 10px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-secondary);
+        }
+        
+        .filter-tab.active {
+            background: var(--accent-gradient);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .order-list-container {
+            padding: 16px;
+        }
+        
+        .empty-order-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+        }
+        
+        .empty-order-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 48px;
+            color: #cccccc;
+        }
+        
+        /* 轉運頁面專用樣式 */
+        .package-filter-tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 8px;
+            margin-top: 12px;
+            padding-bottom: 4px;
+            scrollbar-width: none;
+        }
+        
+        .package-filter-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .package-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+            background: white;
+            color: var(--text-secondary);
+        }
+        
+        .package-tab.active {
+            background: var(--accent-gradient);
+            color: white;
+            border-color: transparent;
+        }
+        
+        /* 個人中心專用樣式 */
+        .profile-header-dark {
+            background: var(--dark-gradient);
+            padding: 24px 16px 20px;
+            color: white;
+            position: relative;
+        }
+        
+        .user-info-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .user-info-left {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .user-avatar-square {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            font-size: 22px;
+            color: white;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+            border: 2px solid white;
+            flex-shrink: 0;
+        }
+        
+        .user-details-extended {
+            flex: 1;
+        }
+        
+        .user-name-large {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        
+        .user-id-code {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 4px;
+        }
+        
+        .invite-code {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.1);
+            color: #ffd700;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+        
+        .settings-button {
+            width: 36px;
+            height: 36px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+        
+        .settings-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+        
+        .settings-button i {
+            font-size: 16px;
+            color: white;
+        }
+        
+        /* VIP會員卡片 - 進一步優化版本 */
+        .vip-card-premium {
+            background: linear-gradient(145deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+            backdrop-filter: blur(10px);
+            box-shadow: 
+                0 15px 40px rgba(0, 0, 0, 0.4),
+                0 8px 20px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            border-radius: 20px;
+            padding: 20px;
+            color: white;
+            margin: -10px 16px 16px;
+            z-index: 15;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            width: calc(100% - 32px);
+            height: 200px;
+        }
+        
+        .vip-card-premium::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent 100%);
+        }
+        
+        .vip-card-premium::after {
+            content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: white;
-            z-index: 1000;
-            padding: 20px;
-            overflow-y: auto;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+            z-index: 1;
         }
         
-        .auth-modal.active {
-            display: block;
-        }
-        
-        .auth-container {
-            max-width: 320px;
-            margin: 0 auto;
-            padding-top: 60px;
-        }
-        
-        .auth-logo {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        
-        .auth-tabs {
+        .vip-card-content {
+            position: relative;
+            z-index: 2;
+            height: 100%;
             display: flex;
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--border-color);
+            flex-direction: column;
         }
         
-        .auth-tab {
-            flex: 1;
-            text-align: center;
-            padding: 15px;
-            font-weight: 600;
-            color: var(--text-secondary);
+        .vip-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        
+        .vip-badge-premium {
+            display: flex;
+            align-items: center;
+            font-size: 16px; /* 增大字体 */
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 16px;
+            border-radius: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            padding-left: 20px; /* 为皇冠留出空间 */
+        }
+        
+        /* 皇冠图标移到框外 */
+        .crown-icon-premium {
+            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 22px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            position: absolute;
+            left: -5px; /* 移到框外 */
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .vip-view-detail {
+            font-size: 13px;
+            color: #ffd700;
             cursor: pointer;
-            border-bottom: 3px solid transparent;
-        }
-        
-        .auth-tab.active {
-            color: #000000;
-            border-bottom-color: #000000;
-        }
-        
-        .auth-form {
-            display: none;
-        }
-        
-        .auth-form.active {
-            display: block;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-primary);
-        }
-        
-        .form-input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1.5px solid var(--border-color);
-            border-radius: 12px;
-            font-size: 16px;
+            text-decoration: none;
             transition: all 0.2s ease;
         }
         
-        .form-input:focus {
-            outline: none;
-            border-color: #000000;
+        .vip-view-detail:hover {
+            opacity: 0.8;
+            text-decoration: underline;
         }
         
-        .auth-btn {
+        .vip-balance-grid-premium {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            margin-bottom: 0px;
+            position: relative;
+            flex: 1;
+        }
+        
+        .vip-balance-item-premium {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 4px;
+            position: relative;
+            justify-content: center;
+        }
+        
+        /* 短線條設計 - 仿VIP會員卡片 */
+        .vip-balance-item-premium:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 30%;
+            right: 0;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* 移除图标，只保留文字 */
+        .vip-balance-label-premium {
+            font-size: 15px; /* 增大标题文字 */
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 4px;
+            text-align: center;
+        }
+        
+        .vip-balance-value-premium {
+            font-size: 18px; /* 增大数值字体 */
+            font-weight: 700;
+            color: white;
+            text-align: center;
+        }
+        
+        .vip-expiry-premium {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+        
+        .vip-expiry-info {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .vip-expiry-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2px;
+        }
+        
+        .vip-expiry-date {
+            font-size: 15px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .vip-renew-btn-premium {
+            background: linear-gradient(135deg, #ffd700 0%, #ffa500 100%);
+            color: #1a1a1a;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
+            min-width: 70px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .vip-renew-btn-premium:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 215, 0, 0.6);
+        }
+        
+        /* 弧形容器 - 強化上弧形設計 */
+        .arc-container {
+            background: white;
+            border-radius: 30px 30px 0 0;
+            margin-top: -50px;
+            padding-top: 60px;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.08);
+            min-height: calc(100vh - 380px);
+        }
+        
+        /* 快速功能卡片 (4x1) - 優化版本 */
+        .quick-stats-container {
+            background: white;
+            border-radius: 16px;
+            border: 1.5px solid var(--border-color);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+            margin: 0 12px 12px;
+            overflow: hidden;
+            height: 90px;
+        }
+        
+        .quick-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0;
+            height: 100%;
+        }
+        
+        .quick-stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            height: 100%;
+            justify-content: center;
+        }
+        
+        .quick-stat-item:hover {
+            background: #f9fafb;
+            transform: translateY(-30px);
+        }
+        
+        .quick-stat-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 6px;
+            font-size: 15px;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .quick-stat-item:hover .quick-stat-icon {
+            transform: scale(1.1);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .quick-stat-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            margin-bottom: 1px;
+        }
+        
+        .quick-stat-count {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        /* 短線條設計 - 只保留短線條 */
+        .quick-stat-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            width: 1px;
+            height: 45px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 推廣合作卡片 */
+        .promotion-card {
+            background: white;
+            border: 1.5px solid var(--border-color);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 0 16px 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .promotion-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .promotion-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .promotion-more {
+            font-size: 13px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .promotion-more:hover {
+            color: var(--text-primary);
+        }
+        
+        .promotion-content {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+        
+        /* 功能菜單網格 (4x2) - 彩色圖標 */
+        .function-menu-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 0 16px 16px;
+        }
+        
+        .function-menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 8px;
+            border-radius: 16px;
+            background: white;
+            border: 1.5px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .function-menu-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+            border-color: #d1d5db;
+        }
+        
+        .function-menu-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 彩色漸變圖標 */
+        .function-menu-icon.color-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .function-menu-icon.color-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .function-menu-icon.color-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .function-menu-icon.color-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .function-menu-icon.color-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+        .function-menu-icon.color-6 { background: linear-gradient(135deg, #30cfd0 0%, #330867 100%); }
+        .function-menu-icon.color-7 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .function-menu-icon.color-8 { background: linear-gradient(135deg, #5ee7df 0%, #b490ca 100%); }
+        
+        .function-menu-text {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: center;
+            line-height: 1.3;
+        }
+        
+        /* 設置模態框 */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .settings-modal.active {
+            display: flex;
+        }
+        
+        .settings-content {
+            background: white;
+            border-radius: 24px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        
+        .settings-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .settings-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .settings-close {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .settings-close:hover {
+            background: #e9e9e9;
+        }
+        
+        .settings-close i {
+            font-size: 18px;
+            color: var(--text-primary);
+        }
+        
+        .settings-list {
+            padding: 16px 0;
+        }
+        
+        .settings-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 24px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .settings-item i {
+            width: 24px;
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-right: 16px;
+        }
+        
+        .settings-item-text {
+            flex: 1;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        
+        .settings-footer {
+            padding: 20px 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+        
+        .settings-footer-text {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+        
+        .settings-footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+        }
+        
+        .settings-footer-link {
+            font-size: 12px;
+            color: #007aff;
+            text-decoration: none;
+        }
+        
+        .settings-footer-link:hover {
+            text-decoration: underline;
+        }
+        
+        .logout-btn {
+            display: block;
             width: 100%;
             padding: 16px;
-            background: var(--accent-gradient);
+            background: linear-gradient(135deg, #ff3b30 0%, #d70015 100%);
             color: white;
             border: none;
             border-radius: 12px;
@@ -151,208 +1343,251 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            margin-top: 10px;
+            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
         }
         
-        .auth-btn:hover {
+        .logout-btn:hover {
             opacity: 0.9;
             transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(255, 59, 48, 0.4);
         }
         
-        .auth-error {
-            color: #ff3b30;
-            font-size: 14px;
-            margin-top: 10px;
-            display: none;
+        /* 熱門代購推薦樣式 */
+        .recommendation-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            padding: 0 16px 16px;
         }
         
-        /* 其他原有樣式保持不變... */
-        
-        /* 新增訂單詳情樣式 */
-        .order-detail-modal {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+        .recommendation-card {
             background: white;
-            z-index: 1000;
-            padding: 20px;
-            overflow-y: auto;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-color);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         
-        .order-detail-modal.active {
-            display: block;
+        .recommendation-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
         
-        .detail-header {
+        .recommendation-image {
+            height: 120px;
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
+            justify-content: center;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .recommendation-content {
+            padding: 12px;
+        }
+        
+        .recommendation-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            line-height: 1.3;
+        }
+        
+        .recommendation-price {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ff3b30;
+        }
+        
+        /* 搜索頁面樣式 */
+        .search-header-sticky {
+            background: white;
             border-bottom: 1px solid var(--border-color);
+            padding: 10px 16px;
+            position: sticky;
+            top: 0;
+            z-index: 40;
         }
         
-        .detail-content {
-            padding: 15px 0;
-        }
-        
-        .detail-item {
+        .search-box-main {
             display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
+            align-items: center;
+            background: #f5f5f5;
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        .search-box-main:focus-within {
+            background: white;
+            border-color: #007aff;
+        }
+        
+        .search-box-main i {
+            color: #666;
+            margin-right: 10px;
+            font-size: 16px;
+        }
+        
+        .search-box-main input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            outline: none;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        
+        .search-cancel-btn {
+            color: #007aff;
+            font-size: 16px;
+            font-weight: 500;
+            margin-left: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        
+        .search-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 16px;
+        }
+        
+        .search-tag {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .search-tag:hover {
+            background: #e9e9e9;
+            border-color: #d1d5db;
+        }
+        
+        .history-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
             border-bottom: 1px solid #f5f5f5;
         }
         
-        .detail-label {
-            color: var(--text-secondary);
-            font-size: 14px;
+        .history-item:last-child {
+            border-bottom: none;
         }
         
-        .detail-value {
-            font-weight: 500;
-        }
-        
-        /* 新增包裹預報樣式 */
-        .forecast-form {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin: 16px;
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-        }
-        
-        .form-section {
-            margin-bottom: 25px;
-        }
-        
-        .form-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 15px;
-            color: var(--text-primary);
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        /* 加載動畫 */
-        .loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
-            display: none;
+        .history-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: #f5f5f5;
+            display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 2000;
+            margin-right: 12px;
+            color: #666;
         }
         
-        .loading-overlay.active {
+        .history-text {
+            flex: 1;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        
+        .history-delete {
+            color: #999;
+            cursor: pointer;
+        }
+        
+        .search-results {
+            padding: 16px;
+        }
+        
+        .result-item {
             display: flex;
+            align-items: center;
+            padding: 16px;
+            background: white;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-color);
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
         }
         
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #000000;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .result-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            border-color: #d1d5db;
         }
         
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .result-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
         }
         
-        /* 原有所有其他CSS樣式保持不變... */
-        /* 由於篇幅限制，這裡只顯示新增樣式，原有樣式保持不變 */
+        .result-image i {
+            font-size: 32px;
+            color: white;
+        }
         
+        .result-content {
+            flex: 1;
+        }
+        
+        .result-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+        
+        .result-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+        
+        .result-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .result-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ff3b30;
+        }
+        
+        .result-delivery {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
     <div class="phone-frame">
         <div class="phone-notch"></div>
         
-        <!-- 加載動畫 -->
-        <div class="loading-overlay" id="loading-overlay">
-            <div class="spinner"></div>
-        </div>
-        
-        <!-- 登入/註冊模態框 -->
-        <div class="auth-modal" id="auth-modal">
-            <div class="auth-container">
-                <div class="auth-logo">
-                    <div class="w-16 h-16 rounded-2xl bg-gradient-black flex items-center justify-center shadow-lg mx-auto mb-4">
-                        <span class="text-white font-bold text-2xl">P</span>
-                    </div>
-                    <h2 class="text-2xl font-bold">ONEPAY拍吧</h2>
-                    <p class="text-gray-500 mt-2">跨境代購集運系統</p>
-                </div>
-                
-                <div class="auth-tabs">
-                    <div class="auth-tab active" data-tab="login">登入</div>
-                    <div class="auth-tab" data-tab="register">註冊</div>
-                </div>
-                
-                <!-- 登入表單 -->
-                <div class="auth-form active" id="login-form">
-                    <div class="form-group">
-                        <label class="form-label">電子郵件</label>
-                        <input type="email" class="form-input" id="login-email" placeholder="輸入您的郵箱">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">密碼</label>
-                        <input type="password" class="form-input" id="login-password" placeholder="輸入密碼">
-                    </div>
-                    
-                    <div class="auth-error" id="login-error"></div>
-                    
-                    <button class="auth-btn" id="login-btn">登入</button>
-                    
-                    <div class="text-center mt-4">
-                        <a href="#" class="text-sm text-gray-500 hover:text-gray-700" id="forgot-password">忘記密碼？</a>
-                    </div>
-                </div>
-                
-                <!-- 註冊表單 -->
-                <div class="auth-form" id="register-form">
-                    <div class="form-group">
-                        <label class="form-label">電子郵件</label>
-                        <input type="email" class="form-input" id="register-email" placeholder="輸入您的郵箱">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">密碼</label>
-                        <input type="password" class="form-input" id="register-password" placeholder="至少6位字符">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">確認密碼</label>
-                        <input type="password" class="form-input" id="register-confirm" placeholder="再次輸入密碼">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">邀請碼 (選填)</label>
-                        <input type="text" class="form-input" id="register-invite" placeholder="如有邀請碼請輸入">
-                    </div>
-                    
-                    <div class="auth-error" id="register-error"></div>
-                    
-                    <button class="auth-btn" id="register-btn">註冊</button>
-                </div>
-            </div>
-        </div>
-        
         <!-- 主要內容區域 -->
         <div class="screen-content">
             <!-- 首頁 -->
-            <div id="home-page" class="page-container">
-                <!-- 原有首頁內容保持不變 -->
+            <div id="home-page" class="page-container active">
                 <!-- 頂部導航欄 -->
                 <div class="sticky top-0 z-40 bg-white border-b border-gray-200">
                     <div class="flex items-center justify-between px-5 pt-10 pb-4">
@@ -368,7 +1603,7 @@
                         <div class="relative">
                             <button class="w-10 h-10 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-all notification-btn">
                                 <i class="fas fa-bell text-gray-700 text-lg"></i>
-                                <div class="notification-dot" id="notification-dot"></div>
+                                <div class="notification-dot"></div>
                             </button>
                         </div>
                     </div>
@@ -430,7 +1665,7 @@
                                         </div>
                                         <div class="mt-2">
                                             <p class="text-xs text-gray-600">进行中</p>
-                                            <p class="text-lg font-bold text-gradient-black mt-1 buy-order-count">0 单</p>
+                                            <p class="text-lg font-bold text-gradient-black mt-1 buy-order-count">3 单</p>
                                         </div>
                                     </div>
                                 </div>
@@ -448,7 +1683,7 @@
                                         </div>
                                         <div class="mt-2">
                                             <p class="text-xs text-gray-600">进行中</p>
-                                            <p class="text-lg font-bold text-gradient-black mt-1 ship-order-count">0 单</p>
+                                            <p class="text-lg font-bold text-gradient-black mt-1 ship-order-count">2 单</p>
                                         </div>
                                     </div>
                                 </div>
@@ -495,10 +1730,10 @@
                             <div class="flex items-start justify-between mb-4">
                                 <div class="flex items-center min-w-0">
                                     <i class="fas fa-crown text-yellow-500 text-base mr-3 flex-shrink-0"></i>
-                                    <h2 class="text-base font-bold text-gray-800 single-line" id="welcome-message">歡迎登入ONEPAY拍吧</h2>
+                                    <h2 class="text-base font-bold text-gray-800 single-line">欢迎来到ONEPAY拍吧</h2>
                                 </div>
-                                <div class="bg-gradient-black text-white text-xs font-medium px-3 py-1 rounded-full flex-shrink-0 ml-2 shadow-sm" id="vip-badge">
-                                    普通會員
+                                <div class="bg-gradient-black text-white text-xs font-medium px-3 py-1 rounded-full flex-shrink-0 ml-2 shadow-sm">
+                                    VIP会员
                                 </div>
                             </div>
                             
@@ -529,14 +1764,56 @@
                             </button>
                         </div>
                         
-                        <div class="space-y-3" id="recent-orders">
-                            <!-- 訂單將動態加載 -->
-                            <div class="empty-order-state py-8">
-                                <div class="empty-order-icon">
-                                    <i class="fas fa-shopping-cart"></i>
+                        <div class="space-y-3">
+                            <!-- 訂單1 -->
+                            <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item">
+                                <div class="flex items-center">
+                                    <div class="order-icon-circle order-buy-icon mr-3">
+                                        <i class="fas fa-box text-white text-sm"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <h4 class="font-medium text-gray-800 text-sm single-line">日本代购 - 索尼耳机</h4>
+                                            <span class="status-badge status-processing">处理中</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mb-1 single-line">电子产品 · 海外仓已收货</p>
+                                        <p class="text-xs text-gray-400">2023-10-15 14:30</p>
+                                    </div>
                                 </div>
-                                <h3 class="text-base font-medium text-gray-800 mb-2">您还没有任何订单</h3>
-                                <p class="text-sm text-gray-500 mb-4">去下单吧</p>
+                            </div>
+                            
+                            <!-- 訂單2 -->
+                            <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item">
+                                <div class="flex items-center">
+                                    <div class="order-icon-circle order-ship-icon mr-3">
+                                        <i class="fas fa-ship text-white text-sm"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <h4 class="font-medium text-gray-800 text-sm single-line">美国转运 - 服装鞋帽</h4>
+                                            <span class="status-badge status-pending">待支付</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mb-1 single-line">包裹重量: 2.5kg · 已到库</p>
+                                        <p class="text-xs text-gray-400">2023-10-14 11:20</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- 訂單3 -->
+                            <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item">
+                                <div class="flex items-center">
+                                    <div class="order-icon-circle order-buy-icon mr-3">
+                                        <i class="fas fa-gem text-white text-sm"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between mb-1">
+                                            <h4 class="font-medium text-gray-800 text-sm single-line">韩国美妆 - 兰芝套装</h4>
+                                            <span class="status-badge status-completed">已完成</span>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mb-1 single-line">护肤品 · 已签收</p>
+                                        <p class="text-xs text-gray-400">2023-10-13 09:45</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -557,7 +1834,7 @@
                         
                         <div class="search-box-unified">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="名稱/主訂單/商品單號" id="buy-search">
+                            <input type="text" placeholder="名稱/主訂單/商品單號">
                         </div>
                         
                         <button class="sort-button" id="time-sort">
@@ -566,21 +1843,30 @@
                     </div>
                     
                     <!-- 訂單篩選標籤 -->
-                    <div class="order-filter-tabs" id="buy-filter-tabs">
-                        <div class="filter-tab active" data-status="all">全部</div>
-                        <div class="filter-tab" data-status="pending_payment">待支付</div>
-                        <div class="filter-tab" data-status="pending_confirm">待确认</div>
-                        <div class="filter-tab" data-status="purchasing">采购中</div>
-                        <div class="filter-tab" data-status="purchased">已采购</div>
-                        <div class="filter-tab" data-status="completed">已完成</div>
-                        <div class="filter-tab" data-status="return">退/换货</div>
-                        <div class="filter-tab" data-status="cancelled">已退单</div>
+                    <div class="order-filter-tabs">
+                        <div class="filter-tab active">全部</div>
+                        <div class="filter-tab">待支付</div>
+                        <div class="filter-tab">待确认</div>
+                        <div class="filter-tab">采购中</div>
+                        <div class="filter-tab">已采购</div>
+                        <div class="filter-tab">已完成</div>
+                        <div class="filter-tab">退/换货</div>
+                        <div class="filter-tab">已退单</div>
                     </div>
                 </div>
                 
                 <!-- 訂單列表區域 -->
-                <div class="order-list-container" id="buy-order-list">
-                    <!-- 訂單將動態加載 -->
+                <div class="order-list-container">
+                    <div class="empty-order-state">
+                        <div class="empty-order-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h3 class="text-base font-medium text-gray-800 mb-2">您还没有任何订单</h3>
+                        <p class="text-sm text-gray-500 mb-4">去下单吧</p>
+                        <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all">
+                            立即下单
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- 熱門代購推薦 -->
@@ -592,8 +1878,34 @@
                         </button>
                     </div>
                     
-                    <div class="recommendation-grid" id="hot-products">
-                        <!-- 推薦商品將動態加載 -->
+                    <div class="recommendation-grid">
+                        <!-- 推薦1 -->
+                        <div class="recommendation-card">
+                            <div class="recommendation-image">
+                                <i class="fas fa-laptop text-white text-4xl"></i>
+                            </div>
+                            <div class="recommendation-content">
+                                <h3 class="recommendation-title">MacBook Pro 16寸 M2 Pro</h3>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="recommendation-price">¥12,499</span>
+                                    <span class="text-xs text-gray-500">美国官网</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- 推薦2 -->
+                        <div class="recommendation-card">
+                            <div class="recommendation-image" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <i class="fas fa-shoe-prints text-white text-4xl"></i>
+                            </div>
+                            <div class="recommendation-content">
+                                <h3 class="recommendation-title">Nike Air Jordan 1 Retro</h3>
+                                <div class="flex items-center justify-between mt-2">
+                                    <span class="recommendation-price">¥1,599</span>
+                                    <span class="text-xs text-gray-500">日本限定</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -627,13 +1939,29 @@
                         <button class="text-xs text-gray-500 hover:text-gray-700 transition-colors" id="clear-history">清空</button>
                     </div>
                     
-                    <div id="search-history">
-                        <!-- 歷史記錄將動態加載 -->
+                    <div>
+                        <!-- 歷史記錄1 -->
+                        <div class="history-item">
+                            <div class="history-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="history-text">日本面膜</div>
+                            <i class="fas fa-times history-delete"></i>
+                        </div>
+                        
+                        <!-- 歷史記錄2 -->
+                        <div class="history-item">
+                            <div class="history-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="history-text">美国保健品</div>
+                            <i class="fas fa-times history-delete"></i>
+                        </div>
                     </div>
                 </div>
                 
                 <!-- 熱門搜尋 -->
-                <div class="search-tags" id="popular-tags">
+                <div class="search-tags">
                     <span class="search-tag">iPhone 15 Pro</span>
                     <span class="search-tag">Nike Dunk</span>
                     <span class="search-tag">兰蔻菁纯</span>
@@ -646,8 +1974,20 @@
                 <div id="search-results" class="hidden">
                     <div class="search-results">
                         <h3 class="text-base font-bold text-gray-800 mb-4">搜索结果</h3>
-                        <div id="search-results-list">
-                            <!-- 結果將動態加載 -->
+                        
+                        <!-- 結果1 -->
+                        <div class="result-item">
+                            <div class="result-image">
+                                <i class="fas fa-headphones"></i>
+                            </div>
+                            <div class="result-content">
+                                <div class="result-title">索尼 WH-1000XM5 降噪耳机</div>
+                                <div class="result-description">日本官网 · 黑色款</div>
+                                <div class="result-footer">
+                                    <div class="result-price">¥2,399</div>
+                                    <div class="result-delivery">7天到货</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -667,7 +2007,7 @@
                         
                         <div class="search-box-unified">
                             <i class="fas fa-search"></i>
-                            <input type="text" placeholder="快遞單號/訂單號/商品單號" id="ship-search">
+                            <input type="text" placeholder="快遞單號/訂單號/商品單號">
                         </div>
                         
                         <button class="sort-button" id="time-sort-ship">
@@ -676,20 +2016,29 @@
                     </div>
                     
                     <!-- 轉運訂單篩選標籤 -->
-                    <div class="package-filter-tabs" id="ship-filter-tabs">
-                        <div class="package-tab active" data-status="all">全部</div>
-                        <div class="package-tab" data-status="pending_payment">待补款</div>
-                        <div class="package-tab" data-status="pending_payment">待支付</div>
-                        <div class="package-tab" data-status="shipping">转运中</div>
-                        <div class="package-tab" data-status="customs">待清关</div>
-                        <div class="package-tab" data-status="transferred">已转超</div>
-                        <div class="package-tab" data-status="delivered">已签收</div>
+                    <div class="package-filter-tabs">
+                        <div class="package-tab active">全部</div>
+                        <div class="package-tab">待补款</div>
+                        <div class="package-tab">待支付</div>
+                        <div class="package-tab">转运中</div>
+                        <div class="package-tab">待清关</div>
+                        <div class="package-tab">已转超</div>
+                        <div class="package-tab">已签收</div>
                     </div>
                 </div>
                 
                 <!-- 轉運訂單列表區域 -->
-                <div class="order-list-container" id="ship-order-list">
-                    <!-- 轉運訂單將動態加載 -->
+                <div class="order-list-container">
+                    <div class="empty-order-state">
+                        <div class="empty-order-icon">
+                            <i class="fas fa-box"></i>
+                        </div>
+                        <h3 class="text-base font-medium text-gray-800 mb-2">暂无转运订单</h3>
+                        <p class="text-sm text-gray-500 mb-4">去下单转运吧</p>
+                        <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all">
+                            开始转运
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- 底部留白區域 -->
@@ -702,13 +2051,13 @@
                 <div class="profile-header-dark">
                     <div class="user-info-container">
                         <div class="user-info-left">
-                            <div class="user-avatar-square" id="user-avatar">
+                            <div class="user-avatar-square">
                                 <i class="fas fa-user"></i>
                             </div>
                             <div class="user-details-extended">
-                                <div class="user-name-large" id="user-name">載入中...</div>
-                                <div class="user-id-code" id="user-id">用戶ID: 載入中...</div>
-                                <div class="invite-code" id="invite-code">邀請碼: 載入中...</div>
+                                <div class="user-name-large">张先生</div>
+                                <div class="user-id-code">用户ID: PD276566166vo</div>
+                                <div class="invite-code">邀请码: INV2023</div>
                             </div>
                         </div>
                         
@@ -718,11 +2067,11 @@
                     </div>
                 </div>
                 
-                <!-- VIP會員卡片 -->
+                <!-- VIP會員卡片 - 進一步優化 -->
                 <div class="vip-card-premium">
                     <div class="vip-card-content">
                         <div class="vip-card-header">
-                            <div class="vip-badge-premium" id="vip-level">
+                            <div class="vip-badge-premium">
                                 <i class="fas fa-crown crown-icon-premium"></i> 尊享会员
                             </div>
                             <a href="#" class="vip-view-detail">查看详情</a>
@@ -731,26 +2080,26 @@
                         <div class="vip-balance-grid-premium">
                             <div class="vip-balance-item-premium">
                                 <span class="vip-balance-label-premium">到付余额</span>
-                                <span class="vip-balance-value-premium" id="balance-cod">0.00</span>
+                                <span class="vip-balance-value-premium">0.00</span>
                             </div>
                             
                             <div class="vip-balance-item-premium">
                                 <span class="vip-balance-label-premium">拍币余额</span>
-                                <span class="vip-balance-value-premium" id="balance-coin">0.00</span>
+                                <span class="vip-balance-value-premium">0.00</span>
                             </div>
                             
                             <div class="vip-balance-item-premium">
                                 <span class="vip-balance-label-premium">优惠券</span>
-                                <span class="vip-balance-value-premium" id="coupon-count">0</span>
+                                <span class="vip-balance-value-premium">0</span>
                             </div>
                         </div>
                         
                         <div class="vip-expiry-premium">
                             <div class="vip-expiry-info">
                                 <span class="vip-expiry-label">有效日期</span>
-                                <div class="vip-expiry-date" id="vip-expiry">2024-12-31</div>
+                                <div class="vip-expiry-date">2024-12-31</div>
                             </div>
-                            <button class="vip-renew-btn-premium" id="renew-vip">续费</button>
+                            <button class="vip-renew-btn-premium">续费</button>
                         </div>
                     </div>
                 </div>
@@ -760,7 +2109,7 @@
                     <!-- 快速功能卡片 (4x1) -->
                     <div class="quick-stats-container">
                         <div class="quick-stats-grid">
-                            <div class="quick-stat-item" id="stat-not-stored">
+                            <div class="quick-stat-item">
                                 <div class="quick-stat-icon">
                                     <i class="fas fa-box"></i>
                                 </div>
@@ -768,28 +2117,28 @@
                                 <span class="quick-stat-count">0</span>
                             </div>
                             
-                            <div class="quick-stat-item" id="stat-stored">
+                            <div class="quick-stat-item">
                                 <div class="quick-stat-icon">
                                     <i class="fas fa-warehouse"></i>
                                 </div>
                                 <span class="quick-stat-text">已入库</span>
-                                <span class="quick-stat-count">0</span>
+                                <span class="quick-stat-count">3</span>
                             </div>
                             
-                            <div class="quick-stat-item" id="stat-not-purchased">
+                            <div class="quick-stat-item">
                                 <div class="quick-stat-icon">
                                     <i class="fas fa-shopping-cart"></i>
                                 </div>
                                 <span class="quick-stat-text">未采购</span>
-                                <span class="quick-stat-count">0</span>
+                                <span class="quick-stat-count">2</span>
                             </div>
                             
-                            <div class="quick-stat-item" id="stat-purchased">
+                            <div class="quick-stat-item">
                                 <div class="quick-stat-icon">
                                     <i class="fas fa-check-circle"></i>
                                 </div>
                                 <span class="quick-stat-text">已采购</span>
-                                <span class="quick-stat-count">0</span>
+                                <span class="quick-stat-count">5</span>
                             </div>
                         </div>
                     </div>
@@ -876,143 +2225,9 @@
                     <div class="pb-8"></div>
                 </div>
             </div>
-            
-            <!-- 訂單詳情頁 -->
-            <div id="order-detail-page" class="page-container">
-                <div class="detail-header">
-                    <button class="back-button back-to-orders">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <h2 class="text-lg font-bold ml-3">訂單詳情</h2>
-                </div>
-                
-                <div class="detail-content px-4">
-                    <div class="detail-item">
-                        <span class="detail-label">訂單編號</span>
-                        <span class="detail-value" id="detail-order-id">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">訂單狀態</span>
-                        <span class="detail-value" id="detail-order-status">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">商品名稱</span>
-                        <span class="detail-value" id="detail-product-name">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">商品鏈接</span>
-                        <span class="detail-value">
-                            <a href="#" id="detail-product-link" class="text-blue-500">查看</a>
-                        </span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">數量</span>
-                        <span class="detail-value" id="detail-quantity">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">商品價格</span>
-                        <span class="detail-value" id="detail-product-price">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">代購費</span>
-                        <span class="detail-value" id="detail-service-fee">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">運費</span>
-                        <span class="detail-value" id="detail-shipping-fee">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">總金額</span>
-                        <span class="detail-value font-bold text-lg" id="detail-total">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">下單時間</span>
-                        <span class="detail-value" id="detail-created-at">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">預計到貨</span>
-                        <span class="detail-value" id="detail-estimated-delivery">-</span>
-                    </div>
-                    
-                    <div class="mt-8">
-                        <h3 class="text-base font-bold mb-4">物流跟踪</h3>
-                        <div id="detail-tracking">
-                            <!-- 物流信息將動態加載 -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- 包裹預報頁 -->
-            <div id="forecast-page" class="page-container">
-                <div class="detail-header">
-                    <button class="back-button back-to-profile">
-                        <i class="fas fa-chevron-left"></i>
-                    </button>
-                    <h2 class="text-lg font-bold ml-3">包裹預報</h2>
-                </div>
-                
-                <div class="forecast-form">
-                    <div class="form-section">
-                        <h3 class="form-title">包裹信息</h3>
-                        
-                        <div class="form-group">
-                            <label class="form-label">快遞單號</label>
-                            <input type="text" class="form-input" id="forecast-tracking" placeholder="輸入快遞單號">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">快遞公司</label>
-                            <select class="form-input" id="forecast-carrier">
-                                <option value="">選擇快遞公司</option>
-                                <option value="usps">USPS (美國郵政)</option>
-                                <option value="fedex">FedEx</option>
-                                <option value="ups">UPS</option>
-                                <option value="dhl">DHL</option>
-                                <option value="other">其他</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">包裹內容</label>
-                            <textarea class="form-input" id="forecast-content" placeholder="描述包裹內容" rows="3"></textarea>
-                        </div>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h3 class="form-title">商品信息</h3>
-                        
-                        <div id="forecast-items">
-                            <!-- 商品項目將動態添加 -->
-                        </div>
-                        
-                        <button class="w-full border border-dashed border-gray-300 py-3 rounded-xl text-gray-500 hover:text-gray-700 transition-colors" id="add-item-btn">
-                            <i class="fas fa-plus mr-2"></i>添加商品
-                        </button>
-                    </div>
-                    
-                    <div class="form-section">
-                        <h3 class="form-title">倉庫信息</h3>
-                        
-                        <div class="form-group">
-                            <label class="form-label">選擇倉庫</label>
-                            <select class="form-input" id="forecast-warehouse">
-                                <option value="us_ny">美國紐約倉庫</option>
-                                <option value="us_ca">美國加州倉庫</option>
-                                <option value="jp_tokyo">日本東京倉庫</option>
-                                <option value="kr_seoul">韓國首爾倉庫</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6">
-                        <button class="auth-btn" id="submit-forecast">提交預報</button>
-                    </div>
-                </div>
-            </div>
         </div>
         
-        <!-- FAB懸浮按鈕 + 二級菜單 -->
+        <!-- FAB懸浮按鈕 + 二級菜單 - 現在位於手機框架內貼齊右側 -->
         <div class="fab-container">
             <div class="fab-menu" id="fab-menu">
                 <!-- 快速代購 -->
@@ -1106,7 +2321,7 @@
             </div>
         </div>
         
-        <!-- 底部導航欄 -->
+        <!-- 底部導航欄 - 高度55px，圖標完整顯示 -->
         <div class="bottom-nav">
             <!-- 首頁 -->
             <button class="nav-button" id="nav-home">
@@ -1153,54 +2368,883 @@
     </div>
 
     <script>
-        // Firebase配置
-        const firebaseConfig = {
-  apiKey: "AIzaSyAUgbncfETG8MtScJyEXl0RyCqyY8pCbQc",
-  authDomain: "onepay-96552.firebaseapp.com",
-  projectId: "onepay-96552",
-  storageBucket: "onepay-96552.firebasestorage.app",
-  messagingSenderId: "554466443215",
-  appId: "1:554466443215:web:8a31efb7bee8c7bdd6dcba",
-        };
+// ==============================
+// Firebase 配置和初始化
+// ==============================
+
+// 替換為您的Firebase配置
+const firebaseConfig = {
+    apiKey: "AIzaSyAUgbncfETG8MtScJyEXl0RyCqyY8pCbQc",
+    authDomain: "onepay-96552.firebaseapp.com",
+    projectId: "onepay-96552",
+    storageBucket: "onepay-96552.firebasestorage.app",
+    messagingSenderId: "554466443215",
+    appId: "1:554466443215:web:8a31efb7bee8c7bdd6dcba"
+};
+
+// 初始化Firebase
+firebase.initializeApp(firebaseConfig);
+
+// 初始化Firebase服務
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
+
+// 全局變量
+let currentUser = null;
+let isAdminMode = false;
+const ADMIN_PASSWORD = "onepay888"; // 管理密碼
+
+// ==============================
+// 用戶認證功能
+// ==============================
+
+// 檢查用戶登入狀態
+auth.onAuthStateChanged(user => {
+    const authModal = document.getElementById('auth-modal');
+    
+    if (user) {
+        // 用戶已登入
+        currentUser = user;
+        authModal.style.display = 'none';
         
-        // 初始化Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        const functions = firebase.functions();
+        // 更新用戶界面
+        updateUserProfile(user);
         
-        // 用戶狀態
-        let currentUser = null;
-        let userData = null;
+        // 檢查用戶文檔是否存在
+        checkUserDocument(user);
         
-        document.addEventListener('DOMContentLoaded', function() {
-            // 初始化UI
-            initUI();
+        // 加載用戶數據
+        loadUserData();
+        
+    } else {
+        // 用戶未登入，顯示登入模態框
+        currentUser = null;
+        authModal.style.display = 'flex';
+    }
+});
+
+// 登入功能
+document.getElementById('login-button').addEventListener('click', async function() {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        // 登入成功，模態框會自動關閉
+    } catch (error) {
+        alert('登入失敗: ' + error.message);
+    }
+});
+
+// 註冊功能
+document.getElementById('signup-button').addEventListener('click', async function() {
+    const email = document.getElementById('auth-email').value;
+    const password = document.getElementById('auth-password').value;
+    
+    try {
+        const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+        const user = userCredential.user;
+        
+        // 創建用戶文檔
+        await db.collection('users').doc(user.uid).set({
+            email: user.email,
+            name: user.email.split('@')[0], // 使用郵件前綴作為預設名稱
+            phone: '',
+            vipLevel: 0,
+            balance: 0,
+            coinBalance: 0,
+            couponCount: 0,
+            inviteCode: generateInviteCode(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert('註冊成功！歡迎使用ONEPAY拍吧！');
+    } catch (error) {
+        alert('註冊失敗: ' + error.message);
+    }
+});
+
+// 忘記密碼功能
+document.getElementById('forgot-password').addEventListener('click', async function(e) {
+    e.preventDefault();
+    const email = document.getElementById('auth-email').value;
+    
+    if (!email) {
+        alert('請輸入您的電子郵件地址');
+        return;
+    }
+    
+    try {
+        await auth.sendPasswordResetEmail(email);
+        alert('密碼重置郵件已發送至 ' + email);
+    } catch (error) {
+        alert('發送失敗: ' + error.message);
+    }
+});
+
+// ==============================
+// 用戶數據管理
+// ==============================
+
+// 檢查用戶文檔是否存在
+async function checkUserDocument(user) {
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    
+    if (!userDoc.exists) {
+        // 創建用戶文檔（應該不會發生，但以防萬一）
+        await db.collection('users').doc(user.uid).set({
+            email: user.email,
+            name: user.displayName || user.email.split('@')[0],
+            phone: '',
+            vipLevel: 0,
+            balance: 0,
+            coinBalance: 0,
+            couponCount: 0,
+            inviteCode: generateInviteCode(),
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+}
+
+// 更新用戶界面
+async function updateUserProfile(user) {
+    // 獲取用戶數據
+    const userDoc = await db.collection('users').doc(user.uid).get();
+    const userData = userDoc.data();
+    
+    // 更新個人中心頁面
+    const userNameElement = document.querySelector('.user-name-large');
+    if (userNameElement && userData) {
+        userNameElement.textContent = userData.name;
+    }
+    
+    // 更新用戶ID顯示
+    const userIdElement = document.querySelector('.user-id-code');
+    if (userIdElement) {
+        userIdElement.textContent = '用戶ID: ' + user.uid.substring(0, 8);
+    }
+    
+    // 更新邀請碼
+    const inviteElement = document.querySelector('.invite-code');
+    if (inviteElement && userData.inviteCode) {
+        inviteElement.textContent = '邀請碼: ' + userData.inviteCode;
+    }
+    
+    // 更新VIP卡片數據
+    updateVIPCard(userData);
+}
+
+// 更新VIP卡片
+function updateVIPCard(userData) {
+    if (!userData) return;
+    
+    const balanceElements = document.querySelectorAll('.vip-balance-value-premium');
+    if (balanceElements.length >= 3) {
+        balanceElements[0].textContent = userData.balance.toFixed(2);
+        balanceElements[1].textContent = userData.coinBalance.toFixed(2);
+        balanceElements[2].textContent = userData.couponCount;
+    }
+    
+    // 更新VIP等級顯示
+    const vipBadge = document.querySelector('.vip-badge-premium');
+    if (vipBadge) {
+        const vipLevels = ['普通會員', 'VIP會員', '尊享會員'];
+        vipBadge.innerHTML = `<i class="fas fa-crown crown-icon-premium"></i> ${vipLevels[userData.vipLevel] || vipLevels[0]}`;
+    }
+}
+
+// 加載用戶數據
+async function loadUserData() {
+    if (!currentUser) return;
+    
+    // 加載訂單數據
+    await loadOrders();
+    
+    // 加載包裹數據
+    await loadPackages();
+    
+    // 加載統計數據
+    updateStatistics();
+}
+
+// ==============================
+// 訂單管理功能
+// ==============================
+
+// 加載訂單
+async function loadOrders() {
+    if (!currentUser) return;
+    
+    try {
+        const ordersSnapshot = await db.collection('orders')
+            .where('userId', '==', currentUser.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(10)
+            .get();
+        
+        const orderListContainer = document.querySelector('.order-list-container');
+        const homeOrderList = document.querySelector('#home-page .space-y-3');
+        
+        if (ordersSnapshot.empty) {
+            // 無訂單，顯示空狀態
+            if (orderListContainer) {
+                orderListContainer.innerHTML = `
+                    <div class="empty-order-state">
+                        <div class="empty-order-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h3 class="text-base font-medium text-gray-800 mb-2">您還沒有任何訂單</h3>
+                        <p class="text-sm text-gray-500 mb-4">去下單吧</p>
+                        <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all create-order-btn">
+                            立即下單
+                        </button>
+                    </div>
+                `;
+            }
+            return;
+        }
+        
+        // 構建訂單列表HTML
+        let ordersHTML = '';
+        let homeOrdersHTML = '';
+        let buyCount = 0;
+        let shipCount = 0;
+        
+        ordersSnapshot.forEach(doc => {
+            const order = doc.data();
+            const orderId = doc.id;
             
-            // 監聽認證狀態變化
-            auth.onAuthStateChanged((user) => {
-                if (user) {
-                    // 用戶已登入
-                    currentUser = user;
-                    loadUserData(user.uid);
-                    hideAuthModal();
-                    showApp();
-                } else {
-                    // 用戶未登入
-                    showAuthModal();
-                    hideApp();
-                }
+            if (order.type === 'buy') buyCount++;
+            if (order.type === 'ship') shipCount++;
+            
+            // 訂單卡片HTML
+            const orderCard = `
+                <div class="shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item" data-order-id="${orderId}">
+                    <div class="flex items-center">
+                        <div class="order-icon-circle ${order.type === 'buy' ? 'order-buy-icon' : 'order-ship-icon'} mr-3">
+                            <i class="fas ${order.type === 'buy' ? 'fa-shopping-cart' : 'fa-shipping-fast'} text-white text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-1">
+                                <h4 class="font-medium text-gray-800 text-sm single-line">${order.productName || '未命名訂單'}</h4>
+                                <span class="status-badge status-${order.status}">${getStatusText(order.status)}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-1 single-line">
+                                ${order.type === 'buy' ? '代購' : '轉運'} · 金額: ¥${order.total || 0}
+                            </p>
+                            <p class="text-xs text-gray-400">${formatDate(order.createdAt)}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            ordersHTML += orderCard;
+            
+            // 首頁只顯示最新的3個訂單
+            if (homeOrdersHTML.split('</div>').length <= 3) {
+                homeOrdersHTML += orderCard;
+            }
+        });
+        
+        // 更新訂單列表
+        if (orderListContainer) {
+            orderListContainer.innerHTML = ordersHTML;
+        }
+        
+        // 更新首頁訂單列表
+        if (homeOrderList) {
+            homeOrderList.innerHTML = homeOrdersHTML;
+        }
+        
+        // 更新訂單數量統計
+        document.querySelector('.buy-order-count').textContent = `${buyCount} 單`;
+        document.querySelector('.ship-order-count').textContent = `${shipCount} 單`;
+        
+        // 綁定訂單點擊事件
+        document.querySelectorAll('.order-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const orderId = this.getAttribute('data-order-id');
+                viewOrderDetail(orderId);
+            });
+        });
+        
+    } catch (error) {
+        console.error('加載訂單失敗:', error);
+    }
+}
+
+// ==============================
+// 包裹管理功能
+// ==============================
+
+// 加載包裹
+async function loadPackages() {
+    if (!currentUser) return;
+    
+    try {
+        const packagesSnapshot = await db.collection('packages')
+            .where('userId', '==', currentUser.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(10)
+            .get();
+        
+        const packageListContainer = document.querySelector('#ship-page .order-list-container');
+        
+        if (!packagesSnapshot.empty) {
+            let packagesHTML = '';
+            
+            packagesSnapshot.forEach(doc => {
+                const package = doc.data();
+                const packageId = doc.id;
+                
+                packagesHTML += `
+                    <div class="shadow-card p-4 mb-3 cursor-pointer package-item" data-package-id="${packageId}">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="font-medium text-gray-800">${package.trackingNumber}</div>
+                            <span class="status-badge status-${package.status}">${getPackageStatusText(package.status)}</span>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-2">${package.carrier || '未知快遞'}</div>
+                        <div class="text-xs text-gray-500">
+                            內容: ${package.content || '未填寫'}
+                        </div>
+                        <div class="text-xs text-gray-400 mt-2">${formatDate(package.createdAt)}</div>
+                    </div>
+                `;
             });
             
+            if (packageListContainer) {
+                packageListContainer.innerHTML = packagesHTML;
+            }
+        }
+        
+    } catch (error) {
+        console.error('加載包裹失敗:', error);
+    }
+}
+
+// ==============================
+// 管理後台功能
+// ==============================
+
+// 管理後台登入
+document.getElementById('admin-login-btn').addEventListener('click', function() {
+    const password = document.getElementById('admin-password').value;
+    
+    if (password === ADMIN_PASSWORD) {
+        isAdminMode = true;
+        document.getElementById('admin-modal').style.display = 'none';
+        showAdminDashboard();
+    } else {
+        alert('管理密碼錯誤！');
+    }
+});
+
+// 取消管理登入
+document.getElementById('admin-cancel').addEventListener('click', function() {
+    document.getElementById('admin-modal').style.display = 'none';
+});
+
+// 顯示管理後台（在設置模態框中添加管理按鈕）
+document.addEventListener('DOMContentLoaded', function() {
+    // 在設置列表中添加管理後台項目
+    const settingsList = document.querySelector('.settings-list');
+    const adminItem = document.createElement('div');
+    adminItem.className = 'settings-item';
+    adminItem.id = 'admin-login-item';
+    adminItem.innerHTML = `
+        <i class="fas fa-user-shield"></i>
+        <span class="settings-item-text">管理後台</span>
+    `;
+    settingsList.appendChild(adminItem);
+    
+    // 綁定管理後台點擊事件
+    document.getElementById('admin-login-item').addEventListener('click', function() {
+        document.getElementById('settings-modal').classList.remove('active');
+        document.getElementById('admin-modal').style.display = 'flex';
+    });
+});
+
+// ==============================
+// 工具函數
+// ==============================
+
+// 生成邀請碼
+function generateInviteCode() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
+}
+
+// 格式化日期
+function formatDate(timestamp) {
+    if (!timestamp) return '未知時間';
+    
+    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+    return date.toLocaleDateString('zh-CN') + ' ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+// 獲取狀態文本
+function getStatusText(status) {
+    const statusMap = {
+        'pending_payment': '待支付',
+        'pending_confirmation': '待確認',
+        'processing': '處理中',
+        'purchased': '已採購',
+        'shipped': '已發貨',
+        'completed': '已完成',
+        'return': '退/換貨',
+        'cancelled': '已退單'
+    };
+    return statusMap[status] || status;
+}
+
+// 獲取包裹狀態文本
+function getPackageStatusText(status) {
+    const statusMap = {
+        'not_stored': '未入庫',
+        'stored': '已入庫',
+        'shipping': '運輸中',
+        'customs': '清關中',
+        'arrived': '已到貨',
+        'delivered': '已簽收'
+    };
+    return statusMap[status] || status;
+}
+
+// 更新統計數據
+async function updateStatistics() {
+    if (!currentUser) return;
+    
+    try {
+        // 查詢未入庫包裹
+        const notStoredQuery = await db.collection('packages')
+            .where('userId', '==', currentUser.uid)
+            .where('status', '==', 'not_stored')
+            .get();
+        
+        // 查詢已入庫包裹
+        const storedQuery = await db.collection('packages')
+            .where('userId', '==', currentUser.uid)
+            .where('status', '==', 'stored')
+            .get();
+        
+        // 更新快速統計卡片
+        const statItems = document.querySelectorAll('.quick-stat-count');
+        if (statItems.length >= 4) {
+            statItems[0].textContent = notStoredQuery.size; // 未入庫
+            statItems[1].textContent = storedQuery.size;    // 已入庫
+            
+            // 這裡可以添加更多統計數據
+            // statItems[2].textContent = ... // 未採購
+            // statItems[3].textContent = ... // 已採購
+        }
+        
+    } catch (error) {
+        console.error('更新統計數據失敗:', error);
+    }
+}
+
+// ==============================
+// 訂單創建功能
+// ==============================
+
+// 快速代購功能
+document.querySelector('.quick-buy').addEventListener('click', function() {
+    if (!currentUser) {
+        alert('請先登入！');
+        document.getElementById('auth-modal').style.display = 'flex';
+        return;
+    }
+    
+    // 創建代購訂單模態框
+    const productName = prompt('請輸入商品名稱：');
+    if (!productName) return;
+    
+    const productPrice = parseFloat(prompt('請輸入商品價格（人民幣）：'));
+    if (isNaN(productPrice)) return;
+    
+    const quantity = parseInt(prompt('請輸入數量：')) || 1;
+    
+    createBuyOrder(productName, productPrice, quantity);
+});
+
+// 創建代購訂單
+async function createBuyOrder(productName, productPrice, quantity = 1) {
+    try {
+        const serviceFee = calculateServiceFee(productPrice);
+        const shippingFee = 50; // 預設運費
+        const total = productPrice * quantity + serviceFee + shippingFee;
+        
+        const orderData = {
+            userId: currentUser.uid,
+            type: 'buy',
+            status: 'pending_payment',
+            productName: productName,
+            productPrice: productPrice,
+            quantity: quantity,
+            serviceFee: serviceFee,
+            shippingFee: shippingFee,
+            total: total,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await db.collection('orders').add(orderData);
+        
+        alert('訂單創建成功！請前往支付。');
+        loadOrders(); // 刷新訂單列表
+        
+    } catch (error) {
+        console.error('創建訂單失敗:', error);
+        alert('創建訂單失敗: ' + error.message);
+    }
+}
+
+// 計算服務費
+function calculateServiceFee(price) {
+    const SERVICE_FEE_RATE = 0.1; // 10%服務費
+    return Math.max(30, price * SERVICE_FEE_RATE); // 最低30元
+}
+
+// 包裹預報功能
+document.querySelector('.package-forecast').addEventListener('click', function() {
+    if (!currentUser) {
+        alert('請先登入！');
+        document.getElementById('auth-modal').style.display = 'flex';
+        return;
+    }
+    
+    const trackingNumber = prompt('請輸入快遞單號：');
+    if (!trackingNumber) return;
+    
+    const carrier = prompt('請輸入快遞公司：');
+    if (!carrier) return;
+    
+    const content = prompt('請輸入包裹內容描述：');
+    
+    createPackage(trackingNumber, carrier, content);
+});
+
+// 創建包裹
+async function createPackage(trackingNumber, carrier, content) {
+    try {
+        const packageData = {
+            userId: currentUser.uid,
+            trackingNumber: trackingNumber,
+            carrier: carrier,
+            content: content || '',
+            warehouse: 'us_ny', // 預設紐約倉庫
+            status: 'not_stored',
+            items: [],
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        };
+        
+        await db.collection('packages').add(packageData);
+        
+        alert('包裹預報成功！');
+        loadPackages(); // 刷新包裹列表
+        
+    } catch (error) {
+        console.error('創建包裹失敗:', error);
+        alert('創建包裹失敗: ' + error.message);
+    }
+}
+
+// 查看訂單詳情
+async function viewOrderDetail(orderId) {
+    try {
+        const orderDoc = await db.collection('orders').doc(orderId).get();
+        if (orderDoc.exists) {
+            const order = orderDoc.data();
+            
+            // 創建訂單詳情彈窗
+            const detailHTML = `
+                <div style="padding: 20px;">
+                    <h3 style="margin-bottom: 15px;">訂單詳情</h3>
+                    <div style="margin-bottom: 10px;"><strong>商品名稱:</strong> ${order.productName}</div>
+                    <div style="margin-bottom: 10px;"><strong>訂單類型:</strong> ${order.type === 'buy' ? '代購' : '轉運'}</div>
+                    <div style="margin-bottom: 10px;"><strong>狀態:</strong> ${getStatusText(order.status)}</div>
+                    <div style="margin-bottom: 10px;"><strong>數量:</strong> ${order.quantity}</div>
+                    <div style="margin-bottom: 10px;"><strong>商品價格:</strong> ¥${order.productPrice}</div>
+                    <div style="margin-bottom: 10px;"><strong>服務費:</strong> ¥${order.serviceFee}</div>
+                    <div style="margin-bottom: 10px;"><strong>運費:</strong> ¥${order.shippingFee}</div>
+                    <div style="margin-bottom: 20px;"><strong>總金額:</strong> ¥${order.total}</div>
+                    <div style="color: #666; font-size: 14px;">創建時間: ${formatDate(order.createdAt)}</div>
+                </div>
+            `;
+            
+            alert(detailHTML.replace(/<[^>]*>/g, '')); // 簡化顯示
+            
+            // 如果是管理員模式，可以顯示更多選項
+            if (isAdminMode) {
+                const newStatus = prompt('更新訂單狀態 (輸入新狀態):');
+                if (newStatus) {
+                    await updateOrderStatus(orderId, newStatus);
+                }
+            }
+        }
+    } catch (error) {
+        console.error('查看訂單詳情失敗:', error);
+    }
+}
+
+// 更新訂單狀態
+async function updateOrderStatus(orderId, newStatus) {
+    try {
+        await db.collection('orders').doc(orderId).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert('訂單狀態更新成功！');
+        loadOrders();
+        
+    } catch (error) {
+        console.error('更新訂單狀態失敗:', error);
+        alert('更新失敗: ' + error.message);
+    }
+}
+
+// ==============================
+// 現有JavaScript代碼整合點
+// ==============================
+
+// 將現有的事件監聽器包裝在DOMContentLoaded中
+document.addEventListener('DOMContentLoaded', function() {
+    // 您的現有JavaScript代碼放在這裡...
+    // 包括頁面切換、廣告輪播、FAB按鈕等功能
+    
+    // 確保在現有代碼執行後，Firebase相關代碼也能正常工作
+    // ...
+    
+    // 添加登出功能
+    document.getElementById('logout-btn').addEventListener('click', async function() {
+        if (confirm('確定要退出登錄嗎？')) {
+            try {
+                await auth.signOut();
+                alert('已退出登錄');
+                if (isAdminMode) {
+                    isAdminMode = false;
+                }
+            } catch (error) {
+                console.error('退出登錄失敗:', error);
+            }
+        }
+    });
+    
+    // 添加開始轉運按鈕功能
+    document.querySelector('#ship-page .empty-order-state button').addEventListener('click', function() {
+        alert('開始轉運功能');
+        // 這裡可以跳轉到包裹預報頁面或創建轉運訂單
+    });
+    
+    // 添加立即下單按鈕功能
+    document.querySelector('#buy-page .empty-order-state button').addEventListener('click', function() {
+        const productName = prompt('請輸入商品名稱：');
+        if (!productName) return;
+        
+        const productPrice = parseFloat(prompt('請輸入商品價格（人民幣）：'));
+        if (isNaN(productPrice)) return;
+        
+        createBuyOrder(productName, productPrice);
+    });
+});
+
+// ==============================
+// 管理後台功能實現
+// ==============================
+
+function showAdminDashboard() {
+    // 創建管理後台界面
+    const adminHTML = `
+        <div class="admin-dashboard" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 2000; overflow-y: auto;">
+            <div style="padding: 20px; background: #1a1a1a; color: white; display: flex; justify-content: space-between; align-items: center;">
+                <h2>ONEPAY拍吧 - 管理後台</h2>
+                <button id="admin-back" style="background: #666; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">返回</button>
+            </div>
+            
+            <div style="padding: 20px;">
+                <h3 style="margin-bottom: 20px;">系統統計</h3>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 30px;">
+                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-users">0</div>
+                        <div style="color: #666;">總用戶數</div>
+                    </div>
+                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-orders">0</div>
+                        <div style="color: #666;">總訂單數</div>
+                    </div>
+                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-packages">0</div>
+                        <div style="color: #666;">總包裹數</div>
+                    </div>
+                    <div class="admin-stat-card" style="background: #f5f5f5; padding: 20px; border-radius: 10px; text-align: center;">
+                        <div style="font-size: 24px; font-weight: bold;" id="admin-total-revenue">¥0</div>
+                        <div style="color: #666;">總營收</div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px;">用戶管理</h3>
+                    <div id="admin-users-list" style="background: #f5f5f5; border-radius: 10px; padding: 15px; max-height: 300px; overflow-y: auto;">
+                        加載中...
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px;">訂單管理</h3>
+                    <div id="admin-orders-list" style="background: #f5f5f5; border-radius: 10px; padding: 15px; max-height: 300px; overflow-y: auto;">
+                        加載中...
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 將管理界面添加到body
+    const adminDiv = document.createElement('div');
+    adminDiv.innerHTML = adminHTML;
+    document.body.appendChild(adminDiv);
+    
+    // 綁定返回按鈕
+    document.getElementById('admin-back').addEventListener('click', function() {
+        adminDiv.remove();
+        isAdminMode = false;
+    });
+    
+    // 加載管理數據
+    loadAdminData();
+}
+
+// 加載管理數據
+async function loadAdminData() {
+    try {
+        // 獲取用戶統計
+        const usersSnapshot = await db.collection('users').get();
+        document.getElementById('admin-total-users').textContent = usersSnapshot.size;
+        
+        // 獲取訂單統計
+        const ordersSnapshot = await db.collection('orders').get();
+        document.getElementById('admin-total-orders').textContent = ordersSnapshot.size;
+        
+        // 計算總營收
+        let totalRevenue = 0;
+        ordersSnapshot.forEach(doc => {
+            const order = doc.data();
+            totalRevenue += order.total || 0;
+        });
+        document.getElementById('admin-total-revenue').textContent = '¥' + totalRevenue.toFixed(2);
+        
+        // 獲取包裹統計
+        const packagesSnapshot = await db.collection('packages').get();
+        document.getElementById('admin-total-packages').textContent = packagesSnapshot.size;
+        
+        // 加載用戶列表
+        let usersHTML = '';
+        usersSnapshot.forEach(doc => {
+            const user = doc.data();
+            usersHTML += `
+                <div style="padding: 10px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: bold;">${user.name || '未設定'}</div>
+                        <div style="font-size: 12px; color: #666;">${user.email}</div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="adminEditUser('${doc.id}')" style="background: #007aff; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">編輯</button>
+                        <button onclick="adminViewUserOrders('${doc.id}')" style="background: #34c759; color: white; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer; font-size: 12px;">訂單</button>
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('admin-users-list').innerHTML = usersHTML || '無用戶數據';
+        
+        // 加載訂單列表
+        let ordersHTML = '';
+        ordersSnapshot.forEach(doc => {
+            const order = doc.data();
+            ordersHTML += `
+                <div style="padding: 10px; border-bottom: 1px solid #ddd;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <div style="font-weight: bold;">${order.productName || '未命名訂單'}</div>
+                        <span style="font-size: 12px; background: #f0f0f0; padding: 2px 8px; border-radius: 10px;">${getStatusText(order.status)}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #666;">
+                        用戶ID: ${order.userId.substring(0, 8)}... | 金額: ¥${order.total || 0}
+                    </div>
+                </div>
+            `;
+        });
+        document.getElementById('admin-orders-list').innerHTML = ordersHTML || '無訂單數據';
+        
+    } catch (error) {
+        console.error('加載管理數據失敗:', error);
+        document.getElementById('admin-users-list').innerHTML = '加載失敗: ' + error.message;
+        document.getElementById('admin-orders-list').innerHTML = '加載失敗: ' + error.message;
+    }
+}
+
+// 管理員編輯用戶（全局函數）
+window.adminEditUser = async function(userId) {
+    const newVipLevel = prompt('設置VIP等級 (0=普通, 1=VIP, 2=尊享):');
+    if (newVipLevel === null) return;
+    
+    const newBalance = prompt('設置到付餘額:');
+    if (newBalance === null) return;
+    
+    try {
+        await db.collection('users').doc(userId).update({
+            vipLevel: parseInt(newVipLevel) || 0,
+            balance: parseFloat(newBalance) || 0,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        alert('用戶資料更新成功！');
+        loadAdminData(); // 刷新管理界面
+        
+    } catch (error) {
+        alert('更新失敗: ' + error.message);
+    }
+};
+
+// 管理員查看用戶訂單
+window.adminViewUserOrders = async function(userId) {
+    try {
+        const ordersSnapshot = await db.collection('orders')
+            .where('userId', '==', userId)
+            .orderBy('createdAt', 'desc')
+            .get();
+        
+        let ordersList = '';
+        ordersSnapshot.forEach(doc => {
+            const order = doc.data();
+            ordersList += `- ${order.productName}: ¥${order.total} (${getStatusText(order.status)})\n`;
+        });
+        
+        alert(`用戶訂單列表:\n\n${ordersList || '無訂單'}`);
+        
+    } catch (error) {
+        alert('獲取訂單失敗: ' + error.message);
+    }
+};
+
+// ==============================
+// 初始化完成
+// ==============================
+
+console.log('ONEPAY拍吧系統已加載，等待Firebase初始化...');
+        document.addEventListener('DOMContentLoaded', function() {
             // 頁面管理
             const pages = {
                 'home': document.getElementById('home-page'),
                 'buy': document.getElementById('buy-page'),
                 'search': document.getElementById('search-page'),
                 'ship': document.getElementById('ship-page'),
-                'profile': document.getElementById('profile-page'),
-                'order-detail': document.getElementById('order-detail-page'),
-                'forecast': document.getElementById('forecast-page')
+                'profile': document.getElementById('profile-page')
             };
             
             let currentPage = 'home';
@@ -1214,84 +3258,65 @@
                 'search': document.getElementById('nav-search')
             };
             
+            // 導航圖標元素
+            const navIcons = {
+                'home': document.getElementById('nav-home-icon'),
+                'buy': document.getElementById('nav-buy-icon'),
+                'ship': document.getElementById('nav-ship-icon'),
+                'profile': document.getElementById('nav-profile-icon')
+            };
+            
+            const navSymbols = {
+                'home': document.getElementById('nav-home-symbol'),
+                'buy': document.getElementById('nav-buy-symbol'),
+                'ship': document.getElementById('nav-ship-symbol'),
+                'profile': document.getElementById('nav-profile-symbol')
+            };
+            
+            const navTexts = {
+                'home': document.getElementById('nav-home-text'),
+                'buy': document.getElementById('nav-buy-text'),
+                'ship': document.getElementById('nav-ship-text'),
+                'profile': document.getElementById('nav-profile-text')
+            };
+            
             // 顯示指定頁面
             function showPage(pageId) {
                 // 隱藏所有頁面
                 Object.values(pages).forEach(page => {
-                    if (page) page.classList.remove('active');
+                    page.classList.remove('active');
                 });
                 
                 // 顯示目標頁面
-                if (pages[pageId]) {
-                    pages[pageId].classList.add('active');
-                    currentPage = pageId;
-                    
-                    // 更新導航狀態
-                    updateNavState(pageId);
-                    
-                    // 頁面特定加載
-                    if (pageId === 'home') {
-                        loadHomeData();
-                    } else if (pageId === 'buy') {
-                        loadBuyOrders();
-                        loadHotProducts();
-                    } else if (pageId === 'ship') {
-                        loadShipOrders();
-                    } else if (pageId === 'profile') {
-                        loadProfileData();
-                    }
-                }
+                pages[pageId].classList.add('active');
+                currentPage = pageId;
+                
+                // 更新導航狀態
+                updateNavState(pageId);
             }
             
             // 更新導航狀態
             function updateNavState(activePage) {
-                const navIcons = {
-                    'home': document.getElementById('nav-home-icon'),
-                    'buy': document.getElementById('nav-buy-icon'),
-                    'ship': document.getElementById('nav-ship-icon'),
-                    'profile': document.getElementById('nav-profile-icon')
-                };
-                
-                const navSymbols = {
-                    'home': document.getElementById('nav-home-symbol'),
-                    'buy': document.getElementById('nav-buy-symbol'),
-                    'ship': document.getElementById('nav-ship-symbol'),
-                    'profile': document.getElementById('nav-profile-symbol')
-                };
-                
-                const navTexts = {
-                    'home': document.getElementById('nav-home-text'),
-                    'buy': document.getElementById('nav-buy-text'),
-                    'ship': document.getElementById('nav-ship-text'),
-                    'profile': document.getElementById('nav-profile-text')
-                };
-                
                 // 重置所有導航狀態
                 Object.keys(navIcons).forEach(key => {
-                    if (navIcons[key]) {
-                        navIcons[key].classList.remove('active');
-                        navIcons[key].classList.remove('jumping');
-                    }
-                    if (navSymbols[key]) navSymbols[key].classList.remove('active');
-                    if (navTexts[key]) {
-                        navTexts[key].classList.remove('active');
-                        navTexts[key].classList.add('inactive');
-                    }
+                    navIcons[key].classList.remove('active');
+                    navIcons[key].classList.remove('jumping');
+                    navSymbols[key].classList.remove('active');
+                    navTexts[key].classList.remove('active');
+                    navTexts[key].classList.add('inactive');
                 });
                 
                 // 設置當前活動導航
                 if (navIcons[activePage]) {
                     navIcons[activePage].classList.add('active');
                     navIcons[activePage].classList.add('jumping');
-                    if (navSymbols[activePage]) navSymbols[activePage].classList.add('active');
-                    if (navTexts[activePage]) {
-                        navTexts[activePage].classList.add('active');
-                        navTexts[activePage].classList.remove('inactive');
-                    }
+                    navSymbols[activePage].classList.add('active');
+                    navTexts[activePage].classList.add('active');
+                    navTexts[activePage].classList.remove('inactive');
                     
                     // 移除跳動動畫類
                     setTimeout(() => {
-                        if (navIcons[activePage]) navIcons[activePage].classList.remove('jumping');
+                        navIcons[activePage].classList.remove('jumping');
                     }, 300);
                 }
             }
@@ -1302,27 +3327,15 @@
             });
             
             navButtons.buy.addEventListener('click', () => {
-                if (currentUser) {
-                    showPage('buy');
-                } else {
-                    showAuthModal();
-                }
+                showPage('buy');
             });
             
             navButtons.ship.addEventListener('click', () => {
-                if (currentUser) {
-                    showPage('ship');
-                } else {
-                    showAuthModal();
-                }
+                showPage('ship');
             });
             
             navButtons.profile.addEventListener('click', () => {
-                if (currentUser) {
-                    showPage('profile');
-                } else {
-                    showAuthModal();
-                }
+                showPage('profile');
             });
             
             navButtons.search.addEventListener('click', () => {
@@ -1330,927 +3343,387 @@
             });
             
             // 返回按鈕事件
-            document.querySelectorAll('.back-btn, .back-to-orders, .back-to-profile').forEach(btn => {
+            document.querySelectorAll('.back-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    if (currentPage === 'order-detail' || currentPage === 'forecast') {
-                        showPage('profile');
-                    } else {
+                    if (currentPage !== 'home') {
                         showPage('home');
                     }
                 });
             });
             
-            // 登入/註冊功能
-            const authModal = document.getElementById('auth-modal');
-            const loginForm = document.getElementById('login-form');
-            const registerForm = document.getElementById('register-form');
-            const loginBtn = document.getElementById('login-btn');
-            const registerBtn = document.getElementById('register-btn');
-            const authTabs = document.querySelectorAll('.auth-tab');
+            // 廣告輪播功能（僅在首頁）
+            const slides = document.querySelectorAll('.ad-slide');
+            const indicators = document.querySelectorAll('.slide-indicator');
+            let currentSlide = 0;
             
-            // 顯示登入模態框
-            function showAuthModal() {
-                authModal.classList.add('active');
-                showPage('home');
+            function showSlide(index) {
+                slides.forEach(slide => slide.classList.remove('active'));
+                indicators.forEach(indicator => indicator.classList.remove('active'));
+                
+                slides[index].classList.add('active');
+                indicators[index].classList.add('active');
+                currentSlide = index;
             }
             
-            // 隱藏登入模態框
-            function hideAuthModal() {
-                authModal.classList.remove('active');
-            }
-            
-            // 顯示應用
-            function showApp() {
-                // 可以在此處顯示用戶相關內容
-            }
-            
-            // 隱藏應用
-            function hideApp() {
-                // 可以在此處隱藏用戶相關內容
-            }
-            
-            // 切換登入/註冊標籤
-            authTabs.forEach(tab => {
-                tab.addEventListener('click', function() {
-                    const tabId = this.getAttribute('data-tab');
-                    
-                    // 更新活動標籤
-                    authTabs.forEach(t => t.classList.remove('active'));
-                    this.classList.add('active');
-                    
-                    // 顯示對應表單
-                    if (tabId === 'login') {
-                        loginForm.classList.add('active');
-                        registerForm.classList.remove('active');
-                    } else {
-                        loginForm.classList.remove('active');
-                        registerForm.classList.add('active');
-                    }
-                });
+            indicators.forEach((indicator, index) => {
+                indicator.addEventListener('click', () => showSlide(index));
             });
             
-            // 登入
-            loginBtn.addEventListener('click', function() {
-                const email = document.getElementById('login-email').value;
-                const password = document.getElementById('login-password').value;
-                const errorEl = document.getElementById('login-error');
-                
-                if (!email || !password) {
-                    showError(errorEl, '請輸入郵箱和密碼');
-                    return;
+            // 自動輪播
+            let slideInterval = setInterval(() => {
+                if (currentPage === 'home' && slides.length > 0) {
+                    let nextSlide = currentSlide + 1;
+                    if (nextSlide >= slides.length) nextSlide = 0;
+                    showSlide(nextSlide);
                 }
-                
-                showLoading();
-                
-                auth.signInWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        hideLoading();
-                        // 登入成功，onAuthStateChanged會處理
-                    })
-                    .catch((error) => {
-                        hideLoading();
-                        showError(errorEl, getAuthErrorMessage(error.code));
-                    });
-            });
+            }, 4000);
             
-            // 註冊
-            registerBtn.addEventListener('click', function() {
-                const email = document.getElementById('register-email').value;
-                const password = document.getElementById('register-password').value;
-                const confirm = document.getElementById('register-confirm').value;
-                const inviteCode = document.getElementById('register-invite').value;
-                const errorEl = document.getElementById('register-error');
-                
-                if (!email || !password || !confirm) {
-                    showError(errorEl, '請填寫所有必填欄位');
-                    return;
-                }
-                
-                if (password.length < 6) {
-                    showError(errorEl, '密碼至少需要6位字符');
-                    return;
-                }
-                
-                if (password !== confirm) {
-                    showError(errorEl, '兩次輸入的密碼不一致');
-                    return;
-                }
-                
-                showLoading();
-                
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then((userCredential) => {
-                        // 創建用戶資料
-                        const user = userCredential.user;
-                        const userData = {
-                            email: email,
-                            name: email.split('@')[0],
-                            phone: '',
-                            vipLevel: 0,
-                            balance: 0,
-                            coinBalance: 0,
-                            couponCount: 0,
-                            inviteCode: generateInviteCode(),
-                            referredBy: inviteCode || '',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                        };
-                        
-                        return db.collection('users').doc(user.uid).set(userData);
-                    })
-                    .then(() => {
-                        hideLoading();
-                        // 註冊成功，onAuthStateChanged會處理
-                    })
-                    .catch((error) => {
-                        hideLoading();
-                        showError(errorEl, getAuthErrorMessage(error.code));
-                    });
-            });
-            
-            // 加載用戶數據
-            function loadUserData(userId) {
-                db.collection('users').doc(userId).get()
-                    .then((doc) => {
-                        if (doc.exists) {
-                            userData = doc.data();
-                            updateUserUI();
-                            loadHomeData();
-                        }
-                    })
-                    .catch((error) => {
-                        console.error('Error loading user data:', error);
-                    });
-            }
-            
-            // 更新用戶UI
-            function updateUserUI() {
-                if (!userData) return;
-                
-                // 更新個人中心
-                document.getElementById('user-name').textContent = userData.name || '用戶';
-                document.getElementById('user-id').textContent = `用戶ID: ${currentUser.uid.substring(0, 12)}`;
-                document.getElementById('invite-code').textContent = `邀請碼: ${userData.inviteCode || '無'}`;
-                
-                // 更新VIP信息
-                document.getElementById('balance-cod').textContent = userData.balance?.toFixed(2) || '0.00';
-                document.getElementById('balance-coin').textContent = userData.coinBalance?.toFixed(2) || '0.00';
-                document.getElementById('coupon-count').textContent = userData.couponCount || '0';
-                
-                // 更新VIP等級
-                const vipLevel = userData.vipLevel || 0;
-                const vipBadge = document.getElementById('vip-badge');
-                const vipLevelEl = document.getElementById('vip-level');
-                
-                if (vipLevel === 0) {
-                    vipBadge.textContent = '普通會員';
-                    vipLevelEl.innerHTML = '<i class="fas fa-crown crown-icon-premium"></i> 普通会员';
-                } else if (vipLevel === 1) {
-                    vipBadge.textContent = 'VIP會員';
-                    vipLevelEl.innerHTML = '<i class="fas fa-crown crown-icon-premium"></i> VIP会员';
-                } else {
-                    vipBadge.textContent = '尊享會員';
-                    vipLevelEl.innerHTML = '<i class="fas fa-crown crown-icon-premium"></i> 尊享会员';
-                }
-                
-                // 更新歡迎消息
-                document.getElementById('welcome-message').textContent = `歡迎回來，${userData.name}`;
-            }
-            
-            // 加載首頁數據
-            function loadHomeData() {
-                if (!currentUser) return;
-                
-                // 加載訂單統計
-                loadOrderStats();
-                
-                // 加載最近訂單
-                loadRecentOrders();
-            }
-            
-            // 加載訂單統計
-            function loadOrderStats() {
-                if (!currentUser) return;
-                
-                // 代購訂單統計
-                db.collection('orders')
-                    .where('userId', '==', currentUser.uid)
-                    .where('type', '==', 'buy')
-                    .where('status', 'in', ['pending_payment', 'pending_confirm', 'purchasing'])
-                    .get()
-                    .then((querySnapshot) => {
-                        document.querySelector('.buy-order-count').textContent = `${querySnapshot.size} 单`;
-                    });
-                
-                // 轉運訂單統計
-                db.collection('orders')
-                    .where('userId', '==', currentUser.uid)
-                    .where('type', '==', 'ship')
-                    .where('status', 'in', ['pending_payment', 'shipping', 'customs'])
-                    .get()
-                    .then((querySnapshot) => {
-                        document.querySelector('.ship-order-count').textContent = `${querySnapshot.size} 单`;
-                    });
-            }
-            
-            // 加載最近訂單
-            function loadRecentOrders() {
-                if (!currentUser) return;
-                
-                const ordersContainer = document.getElementById('recent-orders');
-                ordersContainer.innerHTML = '';
-                
-                db.collection('orders')
-                    .where('userId', '==', currentUser.uid)
-                    .orderBy('createdAt', 'desc')
-                    .limit(3)
-                    .get()
-                    .then((querySnapshot) => {
-                        if (querySnapshot.empty) {
-                            ordersContainer.innerHTML = `
-                                <div class="empty-order-state py-8">
-                                    <div class="empty-order-icon">
-                                        <i class="fas fa-shopping-cart"></i>
-                                    </div>
-                                    <h3 class="text-base font-medium text-gray-800 mb-2">您还没有任何订单</h3>
-                                    <p class="text-sm text-gray-500 mb-4">去下单吧</p>
-                                </div>
-                            `;
-                            return;
-                        }
-                        
-                        querySnapshot.forEach((doc) => {
-                            const order = doc.data();
-                            const orderElement = createOrderElement(order, doc.id);
-                            ordersContainer.appendChild(orderElement);
-                        });
-                    })
-                    .catch((error) => {
-                        console.error('Error loading recent orders:', error);
-                    });
-            }
-            
-            // 創建訂單元素
-            function createOrderElement(order, orderId) {
-                const div = document.createElement('div');
-                div.className = 'shadow-card p-4 cursor-pointer hover:shadow-md transition-all order-item';
-                div.dataset.orderId = orderId;
-                
-                const iconClass = order.type === 'buy' ? 'order-buy-icon' : 'order-ship-icon';
-                const icon = order.type === 'buy' ? 'fa-shopping-cart' : 'fa-shipping-fast';
-                
-                let statusClass = 'status-processing';
-                let statusText = '處理中';
-                
-                if (order.status === 'completed') {
-                    statusClass = 'status-completed';
-                    statusText = '已完成';
-                } else if (order.status === 'pending_payment') {
-                    statusClass = 'status-pending';
-                    statusText = '待支付';
-                }
-                
-                const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date();
-                const dateStr = date.toLocaleDateString('zh-CN');
-                
-                div.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="order-icon-circle ${iconClass} mr-3">
-                            <i class="fas ${icon} text-white text-sm"></i>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between mb-1">
-                                <h4 class="font-medium text-gray-800 text-sm single-line">${order.productName || '未命名訂單'}</h4>
-                                <span class="status-badge ${statusClass}">${statusText}</span>
-                            </div>
-                            <p class="text-xs text-gray-500 mb-1 single-line">${order.type === 'buy' ? '代購訂單' : '轉運訂單'} • ${order.statusText || ''}</p>
-                            <p class="text-xs text-gray-400">${dateStr}</p>
-                        </div>
-                    </div>
-                `;
-                
-                div.addEventListener('click', () => {
-                    showOrderDetail(orderId, order);
-                });
-                
-                return div;
-            }
-            
-            // 顯示訂單詳情
-            function showOrderDetail(orderId, order) {
-                // 設置訂單詳情
-                document.getElementById('detail-order-id').textContent = orderId;
-                document.getElementById('detail-order-status').textContent = getStatusText(order.status);
-                document.getElementById('detail-product-name').textContent = order.productName || '未命名商品';
-                document.getElementById('detail-quantity').textContent = order.quantity || '1';
-                document.getElementById('detail-product-price').textContent = `¥${order.productPrice?.toFixed(2) || '0.00'}`;
-                document.getElementById('detail-service-fee').textContent = `¥${order.serviceFee?.toFixed(2) || '0.00'}`;
-                document.getElementById('detail-shipping-fee').textContent = `¥${order.shippingFee?.toFixed(2) || '0.00'}`;
-                document.getElementById('detail-total').textContent = `¥${order.total?.toFixed(2) || '0.00'}`;
-                
-                const date = order.createdAt?.toDate ? order.createdAt.toDate() : new Date();
-                document.getElementById('detail-created-at').textContent = date.toLocaleString('zh-CN');
-                
-                // 顯示訂單詳情頁
-                showPage('order-detail');
-            }
-            
-            // 加載代購訂單
-            function loadBuyOrders() {
-                if (!currentUser) return;
-                
-                const container = document.getElementById('buy-order-list');
-                container.innerHTML = '<div class="loading-text">加載中...</div>';
-                
-                db.collection('orders')
-                    .where('userId', '==', currentUser.uid)
-                    .where('type', '==', 'buy')
-                    .orderBy('createdAt', 'desc')
-                    .get()
-                    .then((querySnapshot) => {
-                        container.innerHTML = '';
-                        
-                        if (querySnapshot.empty) {
-                            container.innerHTML = `
-                                <div class="empty-order-state">
-                                    <div class="empty-order-icon">
-                                        <i class="fas fa-shopping-cart"></i>
-                                    </div>
-                                    <h3 class="text-base font-medium text-gray-800 mb-2">您还没有任何订单</h3>
-                                    <p class="text-sm text-gray-500 mb-4">去下单吧</p>
-                                    <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all" id="create-order-btn">
-                                        立即下单
-                                    </button>
-                                </div>
-                            `;
-                            
-                            document.getElementById('create-order-btn')?.addEventListener('click', () => {
-                                alert('創建新訂單功能');
-                            });
-                            return;
-                        }
-                        
-                        querySnapshot.forEach((doc) => {
-                            const order = doc.data();
-                            const orderElement = createOrderElement(order, doc.id);
-                            container.appendChild(orderElement);
-                        });
-                    })
-                    .catch((error) => {
-                        console.error('Error loading buy orders:', error);
-                        container.innerHTML = `<div class="error-text">加載失敗，請重試</div>`;
-                    });
-            }
-            
-            // 加載熱門商品
-            function loadHotProducts() {
-                const container = document.getElementById('hot-products');
-                
-                // 模擬數據
-                const hotProducts = [
-                    {
-                        id: 1,
-                        name: 'MacBook Pro 16寸 M2 Pro',
-                        price: 12499,
-                        source: '美国官网',
-                        color: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-                    },
-                    {
-                        id: 2,
-                        name: 'Nike Air Jordan 1 Retro',
-                        price: 1599,
-                        source: '日本限定',
-                        color: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)'
-                    },
-                    {
-                        id: 3,
-                        name: '索尼 WH-1000XM5 耳机',
-                        price: 2399,
-                        source: '日本官网',
-                        color: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-                    },
-                    {
-                        id: 4,
-                        name: '戴森 Supersonic 吹风机',
-                        price: 2999,
-                        source: '美国官网',
-                        color: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
-                    }
-                ];
-                
-                container.innerHTML = '';
-                
-                hotProducts.forEach(product => {
-                    const card = document.createElement('div');
-                    card.className = 'recommendation-card';
-                    card.innerHTML = `
-                        <div class="recommendation-image" style="background: ${product.color};">
-                            <i class="fas fa-box text-white text-4xl"></i>
-                        </div>
-                        <div class="recommendation-content">
-                            <h3 class="recommendation-title">${product.name}</h3>
-                            <div class="flex items-center justify-between mt-2">
-                                <span class="recommendation-price">¥${product.price.toLocaleString()}</span>
-                                <span class="text-xs text-gray-500">${product.source}</span>
-                            </div>
-                        </div>
-                    `;
-                    
-                    card.addEventListener('click', () => {
-                        alert(`購買 ${product.name}`);
-                    });
-                    
-                    container.appendChild(card);
-                });
-            }
-            
-            // 加載轉運訂單
-            function loadShipOrders() {
-                if (!currentUser) return;
-                
-                const container = document.getElementById('ship-order-list');
-                container.innerHTML = '<div class="loading-text">加載中...</div>';
-                
-                db.collection('orders')
-                    .where('userId', '==', currentUser.uid)
-                    .where('type', '==', 'ship')
-                    .orderBy('createdAt', 'desc')
-                    .get()
-                    .then((querySnapshot) => {
-                        container.innerHTML = '';
-                        
-                        if (querySnapshot.empty) {
-                            container.innerHTML = `
-                                <div class="empty-order-state">
-                                    <div class="empty-order-icon">
-                                        <i class="fas fa-box"></i>
-                                    </div>
-                                    <h3 class="text-base font-medium text-gray-800 mb-2">暂无转运订单</h3>
-                                    <p class="text-sm text-gray-500 mb-4">去下单转运吧</p>
-                                    <button class="bg-gradient-black text-white font-medium py-2.5 px-6 rounded-xl hover:opacity-90 transition-all" id="create-ship-order-btn">
-                                        开始转运
-                                    </button>
-                                </div>
-                            `;
-                            
-                            document.getElementById('create-ship-order-btn')?.addEventListener('click', () => {
-                                showPage('forecast');
-                            });
-                            return;
-                        }
-                        
-                        querySnapshot.forEach((doc) => {
-                            const order = doc.data();
-                            const orderElement = createOrderElement(order, doc.id);
-                            container.appendChild(orderElement);
-                        });
-                    })
-                    .catch((error) => {
-                        console.error('Error loading ship orders:', error);
-                        container.innerHTML = `<div class="error-text">加載失敗，請重試</div>`;
-                    });
-            }
-            
-            // 加載個人資料數據
-            function loadProfileData() {
-                if (!currentUser || !userData) return;
-                
-                // 加載統計數據
-                loadProfileStats();
-            }
-            
-            // 加載個人資料統計
-            function loadProfileStats() {
-                if (!currentUser) return;
-                
-                // 未入庫統計
-                db.collection('packages')
-                    .where('userId', '==', currentUser.uid)
-                    .where('status', '==', 'not_stored')
-                    .get()
-                    .then((querySnapshot) => {
-                        document.getElementById('stat-not-stored').querySelector('.quick-stat-count').textContent = querySnapshot.size;
-                    });
-                
-                // 已入庫統計
-                db.collection('packages')
-                    .where('userId', '==', currentUser.uid)
-                    .where('status', '==', 'stored')
-                    .get()
-                    .then((querySnapshot) => {
-                        document.getElementById('stat-stored').querySelector('.quick-stat-count').textContent = querySnapshot.size;
-                    });
-                
-                // 未採購統計
-                db.collection('orders')
-                    .where('userId', '==', currentUser.uid)
-                    .where('type', '==', 'buy')
-                    .where('status', 'in', ['pending_payment', 'pending_confirm'])
-                    .get()
-                    .then((querySnapshot) => {
-                        document.getElementById('stat-not-purchased').querySelector('.quick-stat-count').textContent = querySnapshot.size;
-                    });
-                
-                // 已採購統計
-                db.collection('orders')
-                    .where('userId', '==', currentUser.uid)
-                    .where('type', '==', 'buy')
-                    .where('status', 'in', ['purchasing', 'purchased', 'shipping'])
-                    .get()
-                    .then((querySnapshot) => {
-                        document.getElementById('stat-purchased').querySelector('.quick-stat-count').textContent = querySnapshot.size;
-                    });
-            }
-            
-            // 初始化UI
-            function initUI() {
-                // 廣告輪播功能
-                initCarousel();
-                
-                // FAB功能
-                initFAB();
-                
-                // 搜索功能
-                initSearch();
-                
-                // 設置功能
-                initSettings();
-                
-                // 訂單篩選
-                initFilters();
-                
-                // 快速功能
-                initQuickFunctions();
-            }
-            
-            // 初始化廣告輪播
-            function initCarousel() {
-                const slides = document.querySelectorAll('.ad-slide');
-                const indicators = document.querySelectorAll('.slide-indicator');
-                let currentSlide = 0;
-                
-                function showSlide(index) {
-                    slides.forEach(slide => slide.classList.remove('active'));
-                    indicators.forEach(indicator => indicator.classList.remove('active'));
-                    
-                    slides[index].classList.add('active');
-                    indicators[index].classList.add('active');
-                    currentSlide = index;
-                }
-                
-                indicators.forEach((indicator, index) => {
-                    indicator.addEventListener('click', () => showSlide(index));
-                });
-                
-                // 自動輪播
-                setInterval(() => {
-                    if (slides.length > 0) {
+            // 當頁面切換時重置輪播
+            function resetCarousel() {
+                clearInterval(slideInterval);
+                if (currentPage === 'home') {
+                    slideInterval = setInterval(() => {
                         let nextSlide = currentSlide + 1;
                         if (nextSlide >= slides.length) nextSlide = 0;
                         showSlide(nextSlide);
-                    }
-                }, 4000);
+                    }, 4000);
+                }
             }
             
-            // 初始化FAB
-            function initFAB() {
-                const fabMain = document.getElementById('fab-main');
-                const fabMenu = document.getElementById('fab-menu');
-                const fabIcon = document.getElementById('fab-icon');
-                let fabMenuOpen = false;
+            // FAB懸浮按鈕功能
+            const fabMain = document.getElementById('fab-main');
+            const fabMenu = document.getElementById('fab-menu');
+            const fabIcon = document.getElementById('fab-icon');
+            let fabMenuOpen = false;
+            
+            fabMain.addEventListener('click', function(e) {
+                e.stopPropagation();
+                fabMenuOpen = !fabMenuOpen;
                 
-                fabMain.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    fabMenuOpen = !fabMenuOpen;
+                if (fabMenuOpen) {
+                    // 展開動畫
+                    fabMenu.classList.add('active');
+                    fabMain.style.transform = 'rotate(135deg) scale(1.1)';
+                    fabIcon.className = 'fas fa-times';
                     
-                    if (fabMenuOpen) {
-                        fabMenu.classList.add('active');
-                        fabMain.style.transform = 'rotate(135deg) scale(1.1)';
-                        fabIcon.className = 'fas fa-times';
-                    } else {
-                        fabMenu.classList.remove('active');
-                        fabMain.style.transform = 'rotate(0deg) scale(1)';
-                        fabIcon.className = 'fas fa-plus';
-                    }
-                });
-                
-                // FAB功能
-                document.querySelector('.quick-buy').addEventListener('click', function() {
-                    alert('打開快速代購功能');
-                    closeFABMenu();
-                });
-                
-                document.querySelector('.package-forecast').addEventListener('click', function() {
-                    if (currentUser) {
-                        showPage('forecast');
-                    } else {
-                        showAuthModal();
-                    }
-                    closeFABMenu();
-                });
-                
-                document.querySelector('.contact-service').addEventListener('click', function() {
-                    alert('聯繫在線客服');
-                    closeFABMenu();
-                });
-                
-                function closeFABMenu() {
+                    // 添加展開動畫效果
+                    fabMain.style.boxShadow = '0 10px 28px rgba(0, 0, 0, 0.3)';
+                } else {
+                    // 收起動畫
                     fabMenu.classList.remove('active');
-                    fabMenuOpen = false;
                     fabMain.style.transform = 'rotate(0deg) scale(1)';
                     fabIcon.className = 'fas fa-plus';
-                }
-                
-                document.addEventListener('click', function(event) {
-                    if (fabMenuOpen && !fabMain.contains(event.target) && !fabMenu.contains(event.target)) {
-                        closeFABMenu();
-                    }
-                });
-            }
-            
-            // 初始化搜索
-            function initSearch() {
-                const searchInput = document.getElementById('search-input');
-                const searchCancel = document.getElementById('search-cancel');
-                const searchResults = document.getElementById('search-results');
-                
-                searchInput.addEventListener('focus', function() {
-                    searchCancel.style.display = 'inline';
-                });
-                
-                searchCancel.addEventListener('click', function() {
-                    searchInput.value = '';
-                    searchCancel.style.display = 'none';
-                    searchResults.classList.add('hidden');
-                    searchInput.blur();
-                });
-                
-                searchInput.addEventListener('input', function() {
-                    if (searchInput.value.trim() !== '') {
-                        searchResults.classList.remove('hidden');
-                        // 這裡可以添加搜索邏輯
-                    } else {
-                        searchResults.classList.add('hidden');
-                    }
-                });
-            }
-            
-            // 初始化設置
-            function initSettings() {
-                const settingsBtn = document.getElementById('settings-btn');
-                const settingsModal = document.getElementById('settings-modal');
-                const settingsClose = document.getElementById('settings-close');
-                const logoutBtn = document.getElementById('logout-btn');
-                
-                settingsBtn.addEventListener('click', function() {
-                    settingsModal.classList.add('active');
-                });
-                
-                settingsClose.addEventListener('click', function() {
-                    settingsModal.classList.remove('active');
-                });
-                
-                settingsModal.addEventListener('click', function(event) {
-                    if (event.target === settingsModal) {
-                        settingsModal.classList.remove('active');
-                    }
-                });
-                
-                logoutBtn.addEventListener('click', function() {
-                    if (confirm('確定要退出登入嗎？')) {
-                        auth.signOut().then(() => {
-                            settingsModal.classList.remove('active');
-                            showAuthModal();
-                        });
-                    }
-                });
-            }
-            
-            // 初始化篩選
-            function initFilters() {
-                // 代購篩選
-                document.querySelectorAll('#buy-filter-tabs .filter-tab').forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        document.querySelectorAll('#buy-filter-tabs .filter-tab').forEach(t => {
-                            t.classList.remove('active');
-                        });
-                        this.classList.add('active');
-                        
-                        const status = this.getAttribute('data-status');
-                        // 這裡可以添加篩選邏輯
-                    });
-                });
-                
-                // 轉運篩選
-                document.querySelectorAll('#ship-filter-tabs .package-tab').forEach(tab => {
-                    tab.addEventListener('click', function() {
-                        document.querySelectorAll('#ship-filter-tabs .package-tab').forEach(t => {
-                            t.classList.remove('active');
-                        });
-                        this.classList.add('active');
-                        
-                        const status = this.getAttribute('data-status');
-                        // 這裡可以添加篩選邏輯
-                    });
-                });
-            }
-            
-            // 初始化快速功能
-            function initQuickFunctions() {
-                // 快速功能卡片
-                document.querySelectorAll('.quick-nav-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        const text = this.querySelector('.quick-nav-text').textContent;
-                        
-                        if (text === '新手指引') {
-                            alert('打開新手指引');
-                        } else if (text === '代購試算') {
-                            alert('打開代購試算器');
-                        } else if (text === '錢包充值') {
-                            alert('打開錢包充值');
-                        } else if (text === '倉庫地址') {
-                            alert('查看倉庫地址');
-                        }
-                    });
-                });
-                
-                // 功能菜單
-                document.querySelectorAll('.function-menu-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        const page = this.getAttribute('data-page');
-                        
-                        if (page === 'forecast') {
-                            if (currentUser) {
-                                showPage('forecast');
-                            } else {
-                                showAuthModal();
-                            }
-                        } else {
-                            alert(`打開${this.querySelector('.function-menu-text').textContent}`);
-                        }
-                    });
-                });
-                
-                // 快速統計
-                document.querySelectorAll('.quick-stat-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        const text = this.querySelector('.quick-stat-text').textContent;
-                        alert(`查看${text}詳情`);
-                    });
-                });
-            }
-            
-            // 輔助函數
-            function showLoading() {
-                document.getElementById('loading-overlay').classList.add('active');
-            }
-            
-            function hideLoading() {
-                document.getElementById('loading-overlay').classList.remove('active');
-            }
-            
-            function showError(element, message) {
-                element.textContent = message;
-                element.style.display = 'block';
-                setTimeout(() => {
-                    element.style.display = 'none';
-                }, 5000);
-            }
-            
-            function getAuthErrorMessage(code) {
-                const messages = {
-                    'auth/invalid-email': '無效的電子郵件地址',
-                    'auth/user-disabled': '帳號已被停用',
-                    'auth/user-not-found': '找不到此用戶',
-                    'auth/wrong-password': '密碼錯誤',
-                    'auth/email-already-in-use': '電子郵件已被使用',
-                    'auth/weak-password': '密碼強度不足',
-                    'auth/network-request-failed': '網路錯誤，請檢查連線'
-                };
-                
-                return messages[code] || '發生錯誤，請重試';
-            }
-            
-            function generateInviteCode() {
-                const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                let result = '';
-                for (let i = 0; i < 8; i++) {
-                    result += chars.charAt(Math.floor(Math.random() * chars.length));
-                }
-                return result;
-            }
-            
-            function getStatusText(status) {
-                const statusMap = {
-                    'pending_payment': '待支付',
-                    'pending_confirm': '待確認',
-                    'purchasing': '採購中',
-                    'purchased': '已採購',
-                    'shipping': '運輸中',
-                    'customs': '清關中',
-                    'delivered': '已送達',
-                    'completed': '已完成',
-                    'cancelled': '已取消',
-                    'return': '退換貨'
-                };
-                
-                return statusMap[status] || '處理中';
-            }
-            
-            // 包裹預報功能
-            document.getElementById('add-item-btn')?.addEventListener('click', function() {
-                const container = document.getElementById('forecast-items');
-                const itemCount = container.children.length + 1;
-                
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'forecast-item mb-3 p-3 border border-gray-200 rounded-lg';
-                itemDiv.innerHTML = `
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm font-medium">商品 ${itemCount}</span>
-                        <button class="text-red-500 remove-item-btn">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-input text-sm" placeholder="商品名稱">
-                    </div>
-                    <div class="form-group">
-                        <input type="number" class="form-input text-sm" placeholder="數量" min="1" value="1">
-                    </div>
-                    <div class="form-group">
-                        <input type="number" class="form-input text-sm" placeholder="單價" min="0" step="0.01">
-                    </div>
-                    <div class="form-group">
-                        <input type="text" class="form-input text-sm" placeholder="商品鏈接 (選填)">
-                    </div>
-                `;
-                
-                container.appendChild(itemDiv);
-                
-                // 添加移除事件
-                itemDiv.querySelector('.remove-item-btn').addEventListener('click', function() {
-                    itemDiv.remove();
-                });
-            });
-            
-            document.getElementById('submit-forecast')?.addEventListener('click', function() {
-                const tracking = document.getElementById('forecast-tracking').value;
-                const carrier = document.getElementById('forecast-carrier').value;
-                const content = document.getElementById('forecast-content').value;
-                const warehouse = document.getElementById('forecast-warehouse').value;
-                
-                if (!tracking || !carrier) {
-                    alert('請填寫快遞單號和選擇快遞公司');
-                    return;
-                }
-                
-                // 收集商品信息
-                const items = [];
-                document.querySelectorAll('.forecast-item').forEach(item => {
-                    const name = item.querySelector('input[placeholder="商品名稱"]').value;
-                    const quantity = item.querySelector('input[placeholder="數量"]').value;
-                    const price = item.querySelector('input[placeholder="單價"]').value;
-                    const link = item.querySelector('input[placeholder="商品鏈接 (選填)"]').value;
                     
-                    if (name) {
-                        items.push({
-                            name: name,
-                            quantity: parseInt(quantity) || 1,
-                            price: parseFloat(price) || 0,
-                            link: link
-                        });
-                    }
+                    // 重置陰影
+                    fabMain.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
+                    
+                    // 隱藏FAB項目動畫
+                    document.querySelectorAll('.fab-item').forEach(item => {
+                        item.style.opacity = '0';
+                        item.style.transform = 'translateY(10px)';
+                    });
+                }
+            });
+            
+            // FAB二級菜單功能
+            document.querySelector('.quick-buy').addEventListener('click', function() {
+                alert('打开快速代购功能');
+                closeFABMenu();
+            });
+            
+            document.querySelector('.package-forecast').addEventListener('click', function() {
+                alert('打开包裹预报功能');
+                closeFABMenu();
+            });
+            
+            document.querySelector('.contact-service').addEventListener('click', function() {
+                alert('联系在线客服');
+                closeFABMenu();
+            });
+            
+            function closeFABMenu() {
+                fabMenu.classList.remove('active');
+                fabMenuOpen = false;
+                fabMain.style.transform = 'rotate(0deg) scale(1)';
+                fabIcon.className = 'fas fa-plus';
+                fabMain.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.25)';
+                
+                // 隱藏FAB項目動畫
+                document.querySelectorAll('.fab-item').forEach(item => {
+                    item.style.opacity = '0';
+                    item.style.transform = 'translateY(10px)';
                 });
-                
-                showLoading();
-                
-                // 保存到Firestore
-                db.collection('packages').add({
-                    userId: currentUser.uid,
-                    trackingNumber: tracking,
-                    carrier: carrier,
-                    content: content,
-                    warehouse: warehouse,
-                    items: items,
-                    status: 'not_stored',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                })
-                .then(() => {
-                    hideLoading();
-                    alert('包裹預報成功！');
-                    showPage('profile');
-                })
-                .catch((error) => {
-                    hideLoading();
-                    alert('預報失敗：' + error.message);
+            }
+            
+            // 點擊屏幕其他地方關閉FAB菜單
+            document.addEventListener('click', function(event) {
+                if (fabMenuOpen && !fabMain.contains(event.target) && !fabMenu.contains(event.target)) {
+                    closeFABMenu();
+                }
+            });
+            
+            // 代購頁面篩選標籤點擊
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有標籤的active類
+                    document.querySelectorAll('.filter-tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    
+                    // 為當前點擊的標籤添加active類
+                    this.classList.add('active');
+                    
+                    // 顯示對應的訂單列表
+                    const filterType = this.textContent;
+                    alert(`筛选${filterType}订单`);
                 });
             });
             
-            // 初始顯示登入頁面
-            showAuthModal();
+            // 轉運頁面篩選標籤點擊
+            document.querySelectorAll('.package-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    // 移除所有標籤的active類
+                    document.querySelectorAll('.package-tab').forEach(t => {
+                        t.classList.remove('active');
+                    });
+                    
+                    // 為當前點擊的標籤添加active類
+                    this.classList.add('active');
+                    
+                    // 顯示對應的包裹列表
+                    const filterType = this.textContent;
+                    alert(`筛选${filterType}`);
+                });
+            });
+            
+            // 搜尋頁面功能
+            const searchInput = document.getElementById('search-input');
+            const searchCancel = document.getElementById('search-cancel');
+            const searchResults = document.getElementById('search-results');
+            const searchTags = document.querySelectorAll('.search-tag');
+            const clearHistory = document.getElementById('clear-history');
+            
+            searchInput.addEventListener('focus', function() {
+                searchCancel.style.display = 'inline';
+            });
+            
+            searchCancel.addEventListener('click', function() {
+                searchInput.value = '';
+                searchCancel.style.display = 'none';
+                searchResults.classList.add('hidden');
+                searchInput.blur();
+            });
+            
+            searchInput.addEventListener('input', function() {
+                if (searchInput.value.trim() !== '') {
+                    searchResults.classList.remove('hidden');
+                } else {
+                    searchResults.classList.add('hidden');
+                }
+            });
+            
+            // 搜尋標籤點擊
+            searchTags.forEach(tag => {
+                tag.addEventListener('click', function() {
+                    searchInput.value = this.textContent;
+                    searchResults.classList.remove('hidden');
+                });
+            });
+            
+            // 清空搜尋歷史
+            clearHistory.addEventListener('click', function() {
+                if (confirm('确定要清空搜索历史吗？')) {
+                    document.querySelectorAll('.history-item').forEach(item => {
+                        item.remove();
+                    });
+                }
+            });
+            
+            // 搜尋歷史刪除
+            document.querySelectorAll('.history-delete').forEach(icon => {
+                icon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    this.closest('.history-item').remove();
+                });
+            });
+            
+            // 個人中心功能菜單點擊
+            document.querySelectorAll('.function-menu-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const page = this.getAttribute('data-page');
+                    const pageNames = {
+                        'calculator': '代购试算',
+                        'douyin-recharge': '抖钻代储',
+                        'messages': '站内信',
+                        'warehouse': '我的仓库',
+                        'forecast': '预报包裹',
+                        'packages': '我的包裹',
+                        'help': '帮助中心',
+                        'customer-service': '在线客服'
+                    };
+                    alert(`跳转到${pageNames[page]}页面`);
+                });
+            });
+            
+            // 快速統計卡片點擊
+            document.querySelectorAll('.quick-stat-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const text = this.querySelector('.quick-stat-text').textContent;
+                    alert(`查看${text}详情`);
+                });
+            });
+            
+            // 續費按鈕點擊
+            document.querySelector('.vip-renew-btn-premium').addEventListener('click', function() {
+                alert('打开会员续费页面');
+            });
+            
+            // 查看詳情按鈕點擊
+            document.querySelector('.vip-view-detail').addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('查看当前尊享会员权益详情');
+            });
+            
+            // 設置按鈕點擊
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsModal = document.getElementById('settings-modal');
+            const settingsClose = document.getElementById('settings-close');
+            
+            settingsBtn.addEventListener('click', function() {
+                settingsModal.classList.add('active');
+            });
+            
+            settingsClose.addEventListener('click', function() {
+                settingsModal.classList.remove('active');
+            });
+            
+            // 點擊模態框外部關閉
+            settingsModal.addEventListener('click', function(event) {
+                if (event.target === settingsModal) {
+                    settingsModal.classList.remove('active');
+                }
+            });
+            
+            // 設置項目點擊
+            document.querySelectorAll('.settings-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const id = this.id;
+                    const actionNames = {
+                        'edit-profile': '修改用户资料',
+                        'edit-phone': '用户电话',
+                        'edit-email': '用户信箱',
+                        'account-auth': '账号授权',
+                        'change-password': '修改密码',
+                        'recover-password': '找回密码',
+                        'change-language': '切换语言',
+                        'switch-account': '注销账户'
+                    };
+                    alert(`打开${actionNames[id]}设置`);
+                });
+            });
+            
+            // 退出登錄按鈕
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                if (confirm('确定要退出登录吗？')) {
+                    alert('已退出登录');
+                    showPage('home');
+                    settingsModal.classList.remove('active');
+                }
+            });
+            
+            // 首頁功能點擊事件
+            document.querySelector('.buy-order').addEventListener('click', function() {
+                showPage('buy');
+            });
+            
+            document.querySelector('.ship-order').addEventListener('click', function() {
+                showPage('ship');
+            });
+            
+            document.querySelectorAll('.quick-nav-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const text = this.querySelector('.quick-nav-text').textContent;
+                    alert(`打开${text}功能`);
+                });
+            });
+            
+            document.querySelector('.membership-btn').addEventListener('click', function() {
+                alert('查看会员方案详情');
+            });
+            
+            document.querySelector('.experience-btn').addEventListener('click', function() {
+                alert('开始立即体验服务');
+            });
+            
+            document.querySelector('.view-all-orders').addEventListener('click', function() {
+                showPage('buy');
+            });
+            
+            document.querySelector('.notification-btn').addEventListener('click', function() {
+                alert('查看通知消息');
+            });
+            
+            document.querySelectorAll('.order-item').forEach(order => {
+                order.addEventListener('click', function() {
+                    const title = this.querySelector('h4').textContent;
+                    alert(`查看订单详情：${title}`);
+                });
+            });
+            
+            // 模擬實時更新訂單數量
+            function updateOrderCounts() {
+                const buyCount = Math.floor(Math.random() * 5) + 1;
+                const shipCount = Math.floor(Math.random() * 4) + 1;
+                
+                const buyCountEl = document.querySelector('.buy-order-count');
+                const shipCountEl = document.querySelector('.ship-order-count');
+                
+                if (buyCountEl) buyCountEl.textContent = `${buyCount} 单`;
+                if (shipCountEl) shipCountEl.textContent = `${shipCount} 单`;
+            }
+            
+            // 每30秒更新一次訂單數量
+            updateOrderCounts();
+            setInterval(updateOrderCounts, 30000);
+            
+            // 初始設置首頁為活動狀態
             showPage('home');
+            
+            // 監聽頁面切換以重置輪播
+            const originalShowPage = showPage;
+            showPage = function(pageId) {
+                originalShowPage(pageId);
+                resetCarousel();
+            };
         });
     </script>
+<!-- 登入/註冊模態框 -->
+<div class="auth-modal" id="auth-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
+    <div class="auth-content" style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px;">
+        <h2 style="text-align: center; margin-bottom: 20px;">登入 ONEPAY拍吧</h2>
+        
+        <div style="margin-bottom: 20px;">
+            <input type="email" id="auth-email" placeholder="電子郵件" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px;">
+            <input type="password" id="auth-password" placeholder="密碼" style="width: 100%; padding: 15px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 10px;">
+        </div>
+        
+        <button id="login-button" style="width: 100%; padding: 15px; background: #000; color: white; border: none; border-radius: 10px; font-weight: bold; margin-bottom: 10px;">登入</button>
+        <button id="signup-button" style="width: 100%; padding: 15px; background: #fff; color: #000; border: 1px solid #000; border-radius: 10px; font-weight: bold;">註冊新帳號</button>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="#" id="forgot-password" style="color: #666; text-decoration: none;">忘記密碼？</a>
+        </div>
+    </div>
+</div>
+
+<!-- 管理後台登入模態框 -->
+<div class="admin-modal" id="admin-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px;">
+    <div class="admin-content" style="background: white; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px;">
+        <h2 style="text-align: center; margin-bottom: 20px;">管理後台登入</h2>
+        <input type="password" id="admin-password" placeholder="管理密碼" style="width: 100%; padding: 15px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 10px;">
+        <button id="admin-login-btn" style="width: 100%; padding: 15px; background: #000; color: white; border: none; border-radius: 10px; font-weight: bold;">進入管理後台</button>
+        <button id="admin-cancel" style="width: 100%; padding: 15px; background: #fff; color: #000; border: 1px solid #000; border-radius: 10px; font-weight: bold; margin-top: 10px;">取消</button>
+    </div>
+</div>
 </body>
 </html>
